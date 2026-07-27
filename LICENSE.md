@@ -1,7 +1,7 @@
 # CreatorForge Commercial License
 
-**Copyright (c) 2026 BeastlyFacts, operated by Michael D'Alexander. All rights
-reserved.**
+**Copyright (c) 2026 CreatorForge, created and owned by BeastlyFacts, operated by
+Michael D'Alexander. All rights reserved.**
 
 This is a commercial software license agreement (the "Agreement") between
 BeastlyFacts ("Licensor") and the purchaser ("Licensee" or "You") governing use of
