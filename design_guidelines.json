@@ -1,0 +1,151 @@
+{
+  "theme": {
+    "primary_archetype": "Organic & Earthy / Luxury Custom",
+    "mode": "light-dark-toggle",
+    "description": "A caring, warm, trustworthy environment for pet care creators in light mode, switching to a premium, deep starry navy blue in dark mode for a cinematic, supportive focus."
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Cormorant Garamond",
+      "body": "Manrope"
+    },
+    "scale": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-none",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight leading-tight",
+      "h3": "text-xl sm:text-2xl tracking-tight",
+      "h4": "text-lg sm:text-xl font-medium",
+      "body": "text-base leading-relaxed",
+      "small": "text-sm leading-normal",
+      "overline": "text-xs uppercase tracking-[0.2em]"
+    },
+    "rules": {
+      "headings_weight": "Use font-semibold or font-medium for Cormorant Garamond to retain its elegant curves without feeling too heavy.",
+      "body_weight": "Use font-normal for body, font-medium for buttons and small labels.",
+      "data_testid": "All interactive elements MUST have a data-testid attribute."
+    }
+  },
+  "colors": {
+    "light": {
+      "background": "#F9F7F1",
+      "surface": "#FFFFFF",
+      "surface_secondary": "#F3EFEB",
+      "text_primary": "#2C1E16",
+      "text_secondary": "#5C4D43",
+      "primary": "#C86F53",
+      "primary_hover": "#B35A3F",
+      "secondary": "#4A5D4E",
+      "secondary_hover": "#3B4A3E",
+      "border": "#E8E2D9",
+      "ring": "rgba(200, 111, 83, 0.4)",
+      "success": "#4A5D4E",
+      "warning": "#D4A373",
+      "danger": "#B85450"
+    },
+    "dark": {
+      "background": "#0A1429",
+      "surface": "#12203D",
+      "surface_secondary": "#1A2B4C",
+      "text_primary": "#F1EDE6",
+      "text_secondary": "#B0B7C3",
+      "primary": "#C9A86C",
+      "primary_hover": "#E0C289",
+      "secondary": "#5E8B7E",
+      "secondary_hover": "#74A395",
+      "border": "#233559",
+      "ring": "rgba(201, 168, 108, 0.4)",
+      "success": "#5E8B7E",
+      "warning": "#C9A86C",
+      "danger": "#CC6666"
+    }
+  },
+  "spacing": {
+    "scale": {
+      "container_padding": "px-4 sm:px-6 lg:px-8",
+      "section_gap": "gap-12 lg:gap-16",
+      "element_gap": "gap-4 sm:gap-6",
+      "card_padding": "p-6 sm:p-8"
+    },
+    "rules": {
+      "generous_spacing": "Use 2x typical spacing to create breathing room. Surfaces must have internal padding (e.g., p-6) to prevent text collision.",
+      "mobile_first": "Always start with single column layouts, scaling up with sm: and lg: breakpoints."
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-white (light) / text-background (dark) rounded-md px-6 py-2.5 font-medium transition-all shadow-sm hover:-translate-y-0.5 hover:shadow-md",
+      "secondary": "bg-secondary text-white rounded-md px-6 py-2.5 font-medium transition-all shadow-sm hover:-translate-y-0.5 hover:shadow-md",
+      "outline": "border border-border bg-transparent text-text_primary hover:bg-surface_secondary rounded-md px-6 py-2.5 font-medium transition-all"
+    },
+    "cards": {
+      "default": "bg-surface rounded-xl border border-border shadow-sm transition-all overflow-hidden",
+      "hover": "hover:shadow-md hover:border-primary/30"
+    },
+    "chips": {
+      "default": "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-surface_secondary border border-border text-text_secondary cursor-pointer hover:bg-border transition-colors",
+      "active": "bg-primary/10 border-primary text-primary"
+    },
+    "inputs": {
+      "default": "bg-surface border border-border rounded-md px-4 py-2 text-text_primary focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-all",
+      "label": "block text-sm font-medium text-text_primary mb-1.5"
+    },
+    "draggable_blocks": {
+      "container": "bg-surface border border-border rounded-lg p-4 shadow-sm cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors flex flex-col gap-2 relative",
+      "handle": "text-text_secondary opacity-50 hover:opacity-100 transition-opacity"
+    },
+    "phone_frame": {
+      "container": "relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[14px] rounded-[2.5rem] h-[600px] w-[300px] shadow-xl overflow-hidden",
+      "notch": "w-[148px] h-[18px] bg-gray-800 absolute top-0 rounded-b-[1rem] left-1/2 -translate-x-1/2 z-20",
+      "screen": "rounded-[2rem] overflow-hidden w-full h-full bg-background"
+    }
+  },
+  "layout": {
+    "navbar": "sticky top-0 z-50 w-full backdrop-blur-xl bg-surface/80 border-b border-border shadow-sm",
+    "main_grid": "grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-4rem)] overflow-hidden",
+    "sidebar_left": "lg:col-span-3 h-full overflow-y-auto border-r border-border p-4 bg-surface_secondary/30",
+    "canvas": "lg:col-span-6 h-full overflow-y-auto p-6 bg-background relative",
+    "sidebar_right": "lg:col-span-3 h-full overflow-y-auto border-l border-border p-4 bg-surface"
+  },
+  "motion": {
+    "page_transition": "framer-motion opacity-0 y-4 to opacity-100 y-0 duration-300",
+    "hover_lift": "transition-transform duration-200 hover:-translate-y-1",
+    "list_stagger": "staggerChildren: 0.1"
+  },
+  "visual_enhancers": {
+    "starfield_background": {
+      "technique": "CSS Radial Gradient",
+      "css": ".dark-starfield { background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px), radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px), radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px), radial-gradient(rgba(255,255,255,.4), rgba(255,255,255,.1) 2px, transparent 30px); background-size: 550px 550px, 350px 350px, 250px 250px, 150px 150px; background-position: 0 0, 40px 60px, 130px 270px, 70px 100px; opacity: 0.15; }"
+    },
+    "glassmorphism": {
+      "header": "backdrop-blur-xl bg-surface/80 border-b border-border/40 shadow-sm"
+    }
+  },
+  "media": {
+    "image_urls": [
+      {
+        "url": "https://images.unsplash.com/photo-1450778869180-41d0601e046e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHwyfHxwZXQlMjBjYXJlJTIwZG9nJTIwY2F0fGVufDB8fHx8MTc4MjE3NjI1NHww&ixlib=rb-4.1.0&q=85",
+        "description": "White dog and gray cat hugging each other on grass",
+        "category": "header_preview"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1563460716037-460a3ad24ba9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHwzfHxwZXQlMjBjYXJlJTIwZG9nJTIwY2F0fGVufDB8fHx8MTc4MjE3NjI1NHww&ixlib=rb-4.1.0&q=85",
+        "description": "Short-coated white and brown puppy",
+        "category": "content_preview_1"
+      },
+      {
+        "url": "https://images.pexels.com/photos/46024/pexels-photo-46024.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "A heartwarming moment of a cat cuddling a dog on green grass outdoors.",
+        "category": "content_preview_2"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Install and configure Cormorant Garamond and Manrope fonts via Google Fonts in index.html.",
+    "Implement the theme toggle strictly adhering to the exact hex codes provided for Light and Dark modes. Do not use generic tailwind grays.",
+    "For Dark Mode, inject the .dark-starfield CSS class into a fixed background div under the main layout.",
+    "Build the 3-pane Layout Builder view (Left Sidebar, Canvas, Right Sidebar) as the primary editing interface.",
+    "Use @hello-pangea/dnd for dragging layout blocks onto the Canvas.",
+    "Ensure all buttons, chips, and draggable cards have generous padding and smooth hover transitions.",
+    "Implement the Finalize & Export view with a toggle between desktop view and the specific mobile 'phone_frame' container classes defined here.",
+    "Ensure every interactive element has a data-testid attribute in kebab-case."
+  ]
+}

@@ -1,0 +1,11 @@
+anthropic>=0.112.0
+fastapi==0.110.1
+uvicorn==0.25.0
+python-dotenv==1.2.2
+pydantic[email]==2.13.4
+resend==2.32.2
+starlette==0.37.2
+tavily-python>=0.3.0
+
+# Test suite (backend/tests/) — not needed to run the app itself.
+pytest>=7.0.0
