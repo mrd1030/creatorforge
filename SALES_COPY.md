@@ -26,7 +26,7 @@ then generate or hand-write each one — key facts, a comparison table, a chart,
 pros & cons, a call to action — grounded in facts you provide or pull from a live
 web search. Export clean, ready for your blog, newsletter, or socials.
 
-Full source code. Your own API keys. No subscription, no vendor lock-in.
+Full source code. Your own API keys. No subscription, no monthly fee to us.
 
 ---
 
@@ -113,6 +113,34 @@ real facts and written in an actual voice, not templated AI output.
   not reporting a grounded number.
 - **Rate limiting is in-memory** — resets on restart and doesn't hold up across
   multiple backend instances. A basic deterrent, not a substitute for real auth.
+- **Claude/Anthropic is the only supported AI provider out of the box.** Every
+  generation call goes through the Anthropic SDK directly. Swapping to OpenAI,
+  Gemini, or another provider means editing those calls in the source — not an
+  environment-variable change.
+
+---
+
+## FAQ
+
+**Can I use a different AI provider instead of Claude?**
+Not as a config change — the backend calls the Anthropic SDK directly, so
+swapping providers means editing the source. You get the full backend code, so
+it's very doable for anyone comfortable with Python; it's just not a toggle.
+
+**Do I have to use Vercel and Render?**
+No. Those are the configs included and tested, but the backend is a standard
+FastAPI app and the frontend is a standard static build — deploy either
+anywhere that supports them (a VPS, Railway, Fly.io, Netlify, your own
+hosting). One nuance: Cloudflare Pages works fine for the frontend, but
+Cloudflare Workers doesn't run a conventional FastAPI app without a rewrite, so
+keep the backend on a standard Python host if you go the Cloudflare route.
+
+**Can I use Supabase instead of Render?**
+Supabase is primarily a hosted database/auth platform, not a general Python
+app host, so it's not a direct Render swap. It'd actually be a good way to
+*add* a real database — CreatorForge currently stores drafts in browser
+localStorage (see Known limitations) — but that's a code change, not a config
+change.
 
 ---
 

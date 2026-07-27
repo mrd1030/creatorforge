@@ -85,6 +85,9 @@ The frontend dev server runs on `http://localhost:3000` and expects the backend 
   block's prompt explicitly allows sample/illustrative numbers — it's there to visualize a
   comparison you describe, not to report a sourced statistic. Don't assume chart data is factual
   without checking it yourself.
+- **Claude/Anthropic is the only supported AI provider.** Every generation call goes through the
+  Anthropic SDK directly in `backend/server.py`. Swapping to OpenAI, Gemini, or another provider
+  means editing those calls yourself — it's not an environment-variable swap.
 
 ## Deployment
 
@@ -99,3 +102,10 @@ Both of these are genuinely supported and configured in this repo:
 
 When deploying both, point the frontend's `VITE_BACKEND_URL` at the deployed Render URL, and set
 the backend's `CORS_ORIGINS` to the deployed Vercel URL.
+
+Neither platform is a hard requirement, though — the backend is a standard FastAPI app and the
+frontend is a standard static Vite build, so both deploy anywhere that runs Python 3.10+ or serves
+static files (a VPS, Railway, Fly.io, Netlify, etc.). One caveat if you're considering Cloudflare:
+Cloudflare Pages works fine as a Vercel swap for the frontend, but Cloudflare Workers doesn't run a
+conventional FastAPI app without a real rewrite — keep the backend on a standard Python host if you
+go that route.

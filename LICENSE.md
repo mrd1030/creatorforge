@@ -1,9 +1,11 @@
 # CreatorForge Commercial License
 
-**Copyright (c) 2026 Michael D'Alexander. All rights reserved.**
+**Copyright (c) 2026 BeastlyFacts, operated by Michael D'Alexander. All rights
+reserved.**
 
-This is a commercial software license agreement (the "Agreement") between Michael
-D'Alexander ("Licensor") and the purchaser ("Licensee" or "You") governing use of
+This is a commercial software license agreement (the "Agreement") between
+BeastlyFacts, operated by Michael D'Alexander ("Licensor"), and the purchaser
+("Licensee" or "You") governing use of
 the CreatorForge software, including its source code, design, and architecture
 (the "Software"). By purchasing, downloading, or using the Software, You agree to
 be bound by this Agreement. If You do not agree to these terms, do not purchase,
@@ -111,7 +113,7 @@ reasonable attorneys' fees and costs incurred in that action.
 
 This license covers one (1) end product. For use across multiple projects,
 ongoing agency work, white-label use, or resale/distribution rights, contact
-**mrd103089@gmail.com** to discuss an extended license *before* proceeding — using
+**beastlyfacts.contact@gmail.com** to discuss an extended license *before* proceeding — using
 the Software beyond the scope of Section 1 without one is a breach of this
 Agreement.
 
@@ -154,8 +156,9 @@ those courts.
 
 ## Contact
 
-**Michael D'Alexander**
-mrd103089@gmail.com
+**BeastlyFacts**
+Operated by Michael D'Alexander
+beastlyfacts.contact@gmail.com
 
 ---
 
