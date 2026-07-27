@@ -4,8 +4,7 @@
 reserved.**
 
 This is a commercial software license agreement (the "Agreement") between
-BeastlyFacts, operated by Michael D'Alexander ("Licensor"), and the purchaser
-("Licensee" or "You") governing use of
+BeastlyFacts ("Licensor") and the purchaser ("Licensee" or "You") governing use of
 the CreatorForge software, including its source code, design, and architecture
 (the "Software"). By purchasing, downloading, or using the Software, You agree to
 be bound by this Agreement. If You do not agree to these terms, do not purchase,
@@ -157,7 +156,6 @@ those courts.
 ## Contact
 
 **BeastlyFacts**
-Operated by Michael D'Alexander
 beastlyfacts.contact@gmail.com
 
 ---

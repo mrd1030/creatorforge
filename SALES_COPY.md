@@ -86,6 +86,13 @@ real facts and written in an actual voice, not templated AI output.
 
 ---
 
+## Built by BeastlyFacts
+
+CreatorForge isn't a shelved side project — it's the tool we use to run our own
+content site, generalized so other creators can use it too.
+
+---
+
 ## What's included
 
 - Full source code — frontend and backend
