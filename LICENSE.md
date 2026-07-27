@@ -115,11 +115,22 @@ ongoing agency work, white-label use, or resale/distribution rights, contact
 the Software beyond the scope of Section 1 without one is a breach of this
 Agreement.
 
-## 9. Support
+## 9. Support & Updates
 
-The Software is sold **as-is**. No support, updates, bug fixes, or maintenance are
-included with this license. Licensor may, at their sole discretion, offer such
-services separately.
+The Software is sold **as-is**. No personalized support — setup help,
+troubleshooting, or custom modifications — is included with this license.
+Licensor may, at their sole discretion, offer such services separately.
+
+**Updates are included.** If Licensor releases updates, bug fixes, or new
+features for the Software — including possible future additions such as a
+theme/color customization tool — Licensee is entitled to download and use them
+under this same license, at no additional cost, for as long as Licensor
+continues to offer them through the same distribution channel used for the
+original purchase. This does not apply to a substantially new or
+separately-branded product Licensor may release in the future, which may be
+offered under separate terms and priced separately. Licensor is under no
+obligation to release updates on any particular schedule and may discontinue
+offering them at any time.
 
 ## 10. Governing Law & Venue
 
