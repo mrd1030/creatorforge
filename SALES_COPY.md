@@ -62,7 +62,6 @@ Full source code. Your own API keys. No subscription, no monthly fee to us.
   send yourself a test before it goes out.
 - **Responsive preview.** Check the Desktop and Mobile phone rendering of a
   finished piece side by side before you publish anywhere.
-- **Optional direct push to a Sanity content lake**, if you run one.
 - **Built-in rate limiting.** A basic per-IP limiter on generation/email endpoints
   to blunt casual abuse if a deployed link leaks.
 - **Bring your own API keys.** Anthropic (Claude) for generation, optional Tavily
@@ -104,8 +103,7 @@ content site, generalized so other creators can use it too.
 ## Requirements
 
 - Your own Anthropic (Claude) API key — **required**
-- Optional: Tavily API key (live fact search), Resend API key (newsletter email),
-  a Sanity project (CMS push)
+- Optional: Tavily API key (live fact search), Resend API key (newsletter email)
 - Node 20+ and Python 3.10+ for local development
 
 ---

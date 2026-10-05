@@ -3,10 +3,8 @@
 CreatorForge is an AI-assisted content studio for writers. You build an article or newsletter
 block by block (intro, tips, key facts, references, CTA, etc.), pick a writing style, and the app
 generates each block with Claude, optionally grounded in facts you've pasted in or pulled from a
-live web search. Finished pieces can be exported, previewed as a newsletter, and optionally pushed
-directly to a Sanity content lake — set `VITE_SANITY_PROJECT_ID` (and optionally
-`VITE_SANITY_DATASET`) in `frontend/.env` to point that at your own Sanity project; the push
-feature stays cleanly disabled until you do.
+live web search. Finished pieces can be exported as HTML, Markdown, MDX or JSON (ready for any
+blog or CMS) and previewed as a newsletter.
 
 ## Architecture
 
@@ -50,8 +48,6 @@ The frontend reads these from `frontend/.env`:
 | Variable | Required | What it does |
 |---|---|---|
 | `VITE_BACKEND_URL` | Yes | Base URL of the running backend, e.g. `http://localhost:8000` locally. |
-| `VITE_SANITY_PROJECT_ID` | For Sanity push | Enables "Push to Sanity" in Settings/Finalize and points it at your own Sanity project. Leave unset and the feature stays cleanly disabled — see the intro above. |
-| `VITE_SANITY_DATASET` | No | Which dataset to push into (defaults to `production`). Only relevant if `VITE_SANITY_PROJECT_ID` is set. |
 
 ## Running locally
 

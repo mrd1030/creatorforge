@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import DOMPurify from "dompurify";
-import { ArrowLeft, Copy, Download, Smartphone, Monitor, Loader2, Wand2, DatabaseZap, ExternalLink } from "lucide-react";
+import { ArrowLeft, Copy, Download, Smartphone, Monitor, Loader2, Wand2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +19,6 @@ import {
 import { parseChartBlock } from "@/lib/chart";
 import { ChartBlockView } from "@/components/ChartBlockView";
 import { generateSocial, generateYoutube } from "@/lib/api";
-import { pushToSanity, loadSanityToken, isSanityConfigured, getSanityStudioUrl } from "@/lib/sanity";
 import { getStyleInstructions } from "@/lib/styles";
 import { articleSlug, charCount, seoTitle, slugify, META_DESCRIPTION_MAX, META_DESCRIPTION_MIN, SEO_TITLE_MAX } from "@/lib/seo";
 
@@ -32,8 +31,6 @@ export default function Finalize() {
   const [social, setSocial] = useState<any>(null);
   const [youtube, setYoutube] = useState<string>("");
   const [busy, setBusy] = useState(false);
-  const [sanityBusy, setSanityBusy] = useState(false);
-  const sanityToken = loadSanityToken();
 
   useEffect(() => {
     if (id) {
@@ -106,24 +103,6 @@ export default function Finalize() {
     finally { setBusy(false); }
   };
 
-  const onPushToSanity = async () => {
-    if (!sanityToken) { toast.error("Add your Sanity token in Settings first"); return; }
-    setSanityBusy(true);
-    const t = toast.loading("Pushing to Sanity…");
-    try {
-      const docId = await pushToSanity(draft!, sanityToken);
-      const studioUrl = getSanityStudioUrl(docId);
-      toast.success("Pushed to Sanity as draft", {
-        id: t,
-        description: "Open Sanity Studio to review and publish.",
-        action: { label: "Open Studio", onClick: () => window.open(studioUrl, "_blank") },
-        duration: 8000,
-      });
-    } catch (e: any) {
-      toast.error("Sanity push failed", { id: t, description: e?.message });
-    } finally { setSanityBusy(false); }
-  };
-
   const onGenerateYoutube = async () => {
     setBusy(true);
     const t = toast.loading("Writing YouTube Shorts script…");
@@ -152,26 +131,6 @@ export default function Finalize() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className="rounded-full">{draft.styleId}</Badge>
-          {isSanityConfigured() && sanityToken && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onPushToSanity}
-              disabled={sanityBusy}
-              className="border-red-400/40 text-red-600 dark:text-red-400 hover:bg-red-500/10"
-              data-testid="push-to-sanity-btn"
-            >
-              {sanityBusy
-                ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                : <DatabaseZap className="w-3.5 h-3.5 mr-1.5" />}
-              Push to Sanity
-            </Button>
-          )}
-          {isSanityConfigured() && !sanityToken && (
-            <Button size="sm" variant="ghost" asChild className="text-muted-foreground text-xs">
-              <a href="/settings"><ExternalLink className="w-3 h-3 mr-1" /> Connect Sanity</a>
-            </Button>
-          )}
         </div>
       </div>
 

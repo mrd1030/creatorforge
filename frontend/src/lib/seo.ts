@@ -1,5 +1,5 @@
 // One source of truth for SEO lengths, slugs and titles, shared by the editor, Finalize,
-// every export and the Sanity push. The limits match backend/server.py.
+// and every export. The limits match backend/server.py.
 import type { Draft } from "@/types";
 
 // Google cuts titles at roughly 60 characters and meta descriptions at roughly 160.
