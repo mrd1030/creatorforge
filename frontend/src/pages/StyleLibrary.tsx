@@ -17,13 +17,13 @@ const ICONS: Record<string, any> = {
 };
 
 const EXAMPLES: Record<string, string> = {
-  "real-person": "\"Honestly, the first week with a rescue dog, nobody sleeps. Here's what I wish someone had told me about those first 72 hours.\"",
-  "experienced-caregiver": "\"After working with hundreds of animals in rescue, I've learned the small details matter more than the big decisions. Here's what actually makes a difference.\"",
-  "direct-no-bs": "\"Skip the expensive gadgets. What your cat actually needs is vertical space, hiding spots, and a consistent routine. That's it.\"",
-  "storyteller": "\"It was the kind of summer morning where the dew sticks to your shins. I found him under the porch — a tiny tortoise no bigger than my palm.\"",
-  "professional-educator": "\"Bearded dragons are diurnal reptiles requiring UVB exposure. In simpler terms: they need real sunlight or a special bulb that mimics it — and the difference matters more than most guides let on.\"",
+  "real-person": "\"Honestly, the first month of budgeting is the hardest. Here's what I wish someone had told me before I started.\"",
+  "experienced-caregiver": "\"After helping a lot of people through this, I've learned the small habits matter more than the big decisions. Here's what actually makes a difference.\"",
+  "direct-no-bs": "\"Skip the fancy apps. What a budget actually needs is three numbers, one spreadsheet, and ten minutes a week. That's it.\"",
+  "storyteller": "\"It was the kind of Sunday evening when the week ahead feels heavier than it should. The fridge was empty, and the takeout menu was already open.\"",
+  "professional-educator": "\"Compound interest means you earn returns on your past returns. In simpler terms: money left alone grows faster each year, and starting early matters more than most guides let on.\"",
   "newsletter": "\"Hi friends — three quick reads for you this week. Settle in with your tea and let's get into it.\"",
-  "short-story": "\"The cat had been watching the door for an hour before anyone noticed. When it finally opened, she didn't move at first — just watched, deciding.\"",
+  "short-story": "\"She had been watching the door for an hour before anyone noticed. When it finally opened, she didn't move at first. She just watched, deciding.\"",
 };
 
 export default function StyleLibrary() {

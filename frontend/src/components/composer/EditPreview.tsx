@@ -18,7 +18,7 @@ interface Props {
 }
 
 export default function EditPreview({ draft, setDraft }: Props) {
-  const nc = NICHE_COLORS[draft.brief.niche] || NICHE_COLORS["Pet Care"];
+  const nc = NICHE_COLORS[draft.brief.niche] || NICHE_COLORS["General"];
   const demo = useDemo();
   const streamLocked = isLocked(demo, "stream_all");
   const polishAllLocked = isLocked(demo, "polish_all");

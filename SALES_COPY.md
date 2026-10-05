@@ -37,9 +37,9 @@ Full source code. Your own API keys. No subscription, no monthly fee to us.
   with a drag-and-drop layout builder, or auto-suggested for you.
 - **Six real-person writing voices** — Real Person, Experienced Caregiver, Direct
   & No-BS Practical, Storyteller with Heart, Professional Educator, Newsletter/
-  Email Style — plus a dedicated Short Story mode, across 8 built-in niches (Pet
-  Care, Health & Wellness, Food & Recipes, Travel, Technology, Finance,
-  Lifestyle, Short Stories).
+  Email Style — plus a dedicated Short Story mode, across 9 built-in niches (General,
+  Pet Care, Health & Wellness, Food & Recipes, Travel, Technology, Finance,
+  Lifestyle, Short Stories). Every prompt follows the niche you pick.
 - **Define your own writing styles.** Not limited to the built-in six — write a
   custom voice with its own tagline, vibe, and system-prompt instructions, and it
   shows up right alongside the defaults in the Style Library.

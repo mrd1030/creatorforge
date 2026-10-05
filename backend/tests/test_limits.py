@@ -100,3 +100,14 @@ def test_seo_prompt_uses_selected_niche(calls):
     system = calls[0][0]
     assert "Finance niche" in system
     assert "pet" not in system.lower()
+
+
+def test_prompts_are_topic_neutral():
+    # Writing voices and shared rules must follow the chosen niche, not assume pets.
+    import re
+    pet_words = re.compile(r"\b(pets?|animals?|vet|veterinar\w*|dogs?|cats?|owners?)\b", re.I)
+    for style_id in server.STYLE_SYSTEM_PROMPTS:
+        system = server.build_system_prompt(style_id, {"niche": "Finance", "topic": "Budgeting"})
+        assert not pet_words.search(system), (style_id, pet_words.search(system).group(0))
+    for text in server.BLOCK_INSTRUCTIONS.values():
+        assert not pet_words.search(text)

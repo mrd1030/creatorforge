@@ -44,7 +44,7 @@ function Sec({ open, onToggle, k, title, children }: {
 }
 
 export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, onStyleChange }: Props) {
-  const niche = draft.brief.niche || "Pet Care";
+  const niche = draft.brief.niche || "General";
   const [customCats, setCustomCats] = useState<string[]>(loadCustomCategories());
   const [newCat, setNewCat] = useState("");
   const [newTag, setNewTag] = useState("");
@@ -57,7 +57,7 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
   const [importBusy, setImportBusy] = useState(false);
 
   const styles = getAllStyles();
-  const nicheCategories = NICHES[niche]?.categories || NICHES["Pet Care"].categories;
+  const nicheCategories = NICHES[niche]?.categories || NICHES["General"].categories;
   const allCats = [...new Set([...nicheCategories, ...customCats])];
 
   const update = (patch: Partial<Draft>) => setDraft(prev => prev ? { ...prev, ...patch } : prev);
@@ -342,7 +342,7 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
         <Sec open={openSection === "brief"} onToggle={() => toggle("brief")} k="brief" title="Brief & Metadata">
           <div>
             <Label htmlFor="topic">Topic / Working Title</Label>
-            <Input id="topic" value={draft.brief.topic} onChange={e => updateBrief({ topic: e.target.value })} placeholder="e.g. First-week kitten care" data-testid="brief-topic-input" />
+            <Input id="topic" value={draft.brief.topic} onChange={e => updateBrief({ topic: e.target.value })} placeholder="e.g. How to start a simple monthly budget" data-testid="brief-topic-input" />
           </div>
           <Button
             variant="outline"
@@ -358,7 +358,7 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
           </Button>
           <div>
             <Label htmlFor="audience">Target Audience</Label>
-            <Input id="audience" value={draft.brief.audience} onChange={e => updateBrief({ audience: e.target.value })} placeholder="New cat parents" data-testid="brief-audience-input" />
+            <Input id="audience" value={draft.brief.audience} onChange={e => updateBrief({ audience: e.target.value })} placeholder="e.g. First-time budgeters" data-testid="brief-audience-input" />
           </div>
           <div>
             <Label>Target Length</Label>
@@ -388,7 +388,7 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
 
         <Sec open={openSection === "facts"} onToggle={() => toggle("facts")} k="facts" title="Facts to Use (source of truth)">
           <p className="text-xs text-muted-foreground -mt-1">
-            Paste verified facts, numbers, breed/species details, vet notes or product specs. The AI treats these as authoritative and avoids inventing other specifics.
+            Paste verified facts, numbers, quotes, expert notes or product specs. The AI treats these as authoritative and avoids inventing other specifics.
           </p>
           <Button
             variant="outline"

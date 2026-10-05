@@ -10,44 +10,44 @@ function block(type: BlockType, content: string, note = ""): Block {
 }
 
 export function sampleDraft(): Draft {
-  const d = newDraft("professional-educator");
+  const d = newDraft("real-person");
   d.brief = {
     ...d.brief,
-    niche: "Pet Care",
-    topic: "Keeping a senior dog comfortable through the cold months",
-    audience: "Owners of dogs aged 8 and up whose dogs are slowing down as the weather turns cold.",
+    niche: "Food & Recipes",
+    topic: "A simple Sunday meal prep that makes the whole week easier",
+    audience: "Busy people who want home-cooked weeknight meals without cooking every night.",
     length: "medium",
-    keyPoints: "- Why cold, damp weather is harder on older joints\n- Adjusting walks without cutting exercise\n- Warm, supportive places to rest\n- Paw and coat care in winter\n- Signs that call for a vet visit",
-    angle: "Practical and calm: small changes at home make the biggest difference, and none of them require special gear.",
-    focusKeyword: "senior dog winter care",
-    metaDescription: "Senior dog winter care, simplified: shorter walks, warm resting spots, paw care, and the warning signs that mean an older dog should see a vet this season.",
-    categories: ["Dogs", "Pet Care"],
-    tags: ["senior-dogs", "winter", "dog-health", "joint-care"],
-    slug: "senior-dog-winter-care",
+    keyPoints: "- Why a little prep on Sunday saves time all week\n- Cooking base ingredients instead of full meals\n- A mix-and-match plan for five dinners\n- Storage tips that keep food fresh\n- How to keep it from getting boring",
+    angle: "Relaxed and practical: one or two hours of prep, no fancy equipment, and meals that still feel fresh on Thursday.",
+    focusKeyword: "sunday meal prep",
+    metaDescription: "A simple Sunday meal prep plan: cook a few base ingredients once, then mix and match fresh, easy dinners all week with almost no weeknight cooking at all.",
+    categories: ["Meal Prep", "Quick Meals", "Dinner"],
+    tags: ["meal-prep", "weeknight-dinners", "batch-cooking", "healthy-eating"],
+    slug: "simple-sunday-meal-prep",
   };
   d.headerImage = {
-    prompt: "An old golden retriever with a grey muzzle curled up on a thick fleece bed beside a sunny window in winter, soft morning light, frost on the glass, cozy living room, shallow depth of field, warm natural tones, 35mm lens, calm and gentle mood",
-    alt: "Grey-muzzled older dog resting on a fleece bed by a frosty window",
+    prompt: "Overhead shot of a bright kitchen counter with glass meal prep containers filled with roasted vegetables, grains, grilled chicken and colorful sauces, fresh herbs and a wooden cutting board, soft natural window light, clean and inviting, 35mm lens",
+    alt: "Glass containers of roasted vegetables, grains and sauces on a sunny counter",
     url: "",
   };
   d.affiliate = { ...d.affiliate, enabled: false };
   d.blocks = [
-    block("title", "Senior Dogs and Cold Weather: A Practical Comfort Guide"),
+    block("title", "A Simple Sunday Meal Prep That Makes the Whole Week Easier"),
     block("prologue",
-      "Cold weather often makes a dog's age more visible. Stretches take longer, stairs get a second look, and the first walk of the morning starts slowly. Most of what helps an older dog through winter happens at home, and very little of it is complicated."),
+      "Monday night, 6:30, nothing planned, and the takeout app is already open. A little Sunday prep changes that moment completely. Spend an hour or two once, and most weeknight dinners come together in about ten minutes."),
     block("paragraph",
-      "Cold, damp air tends to make stiff joints feel stiffer, so a dog who moved easily in early autumn can seem creaky by midwinter. That is not a reason to cut activity. Regular movement keeps muscles strong and joints working. What changes is the structure of the day: shorter outings, a slower warm-up, and a soft, warm place to recover afterward. The goal is to adjust the routine, not shrink it."),
+      "The trick is to prep ingredients, not finished meals. Five identical containers of the same dish get old by Wednesday. A tray of roasted vegetables, a pot of grains, a batch of protein, and a couple of sauces can become a grain bowl one night, tacos the next, and a quick stir-fry after that. Everything is ready, but dinner still feels like a choice."),
     block("tips",
-      "- Replace one long walk with two or three shorter ones, starting at an easy pace.\n- Keep beds away from drafts and cold floors, and add a thick fleece or orthopedic pad.\n- Rinse and dry paws after walks on salted or gritted roads.\n- Keep nails trimmed for better grip, and lay rugs over slippery floors.\n- Consider a fitted coat for thin-coated dogs or dogs that shiver outdoors.\n- Place fresh water close to resting spots, since some older dogs drink less in cold weather."),
+      "- Roast two sheet pans of vegetables at once, using different seasonings on each.\n- Cook a big pot of one grain, like rice or quinoa, and let it cool before storing.\n- Prepare one or two proteins, such as chicken thighs, baked tofu, or a pot of beans.\n- Make two sauces with different flavors, like a lemon tahini and a quick salsa.\n- Wash and chop fresh greens and herbs so they are ready to grab.\n- Store everything separately so each meal can be mixed differently."),
     block("key-facts",
-      "- Many older dogs show more joint stiffness in cold, damp weather.\n- Shorter, more frequent walks are usually easier on aging joints than one long one.\n- Road salt and ice can dry out and crack paw pads.\n- Changes in appetite, thirst, sleep, or mobility warrant a vet visit.\n- Many vets recommend checkups twice a year for senior dogs."),
+      "- Prepping components instead of full meals keeps the week from feeling repetitive.\n- Most cooked dishes keep well in the fridge for three to four days.\n- Letting food cool before sealing containers helps keep it fresh.\n- Freezing a few portions extends the plan into the following week.\n- Clear containers make it easier to see what needs to be used first."),
     block("table",
-      "| Area | What to watch for | Simple fix |\n| --- | --- | --- |\n| Joints | Slow to stand, stiff first steps | Gentle warm-up walk, padded bed |\n| Paws | Dry or cracked pads, licking | Rinse after walks, paw balm |\n| Sleeping spot | Drafts, cold tile floor | Raised bed, extra blanket |\n| Floors | Slipping on hard surfaces | Rugs or runners on main paths |\n| Water | Bowl left untouched | Fresh water near the bed |"),
+      "| Night | Base | Protein | Finish with |\n| --- | --- | --- | --- |\n| Monday | Rice | Chicken | Roasted veg and tahini |\n| Tuesday | Tortillas | Beans | Salsa and greens |\n| Wednesday | Quinoa | Tofu | Stir-fried veg and soy glaze |\n| Thursday | Pasta | Chicken | Roasted veg and herbs |\n| Friday | Greens | Beans | Everything left over, as a big salad |"),
     block("chart",
-      "An example split of a winter day's activity for an older dog, in minutes. The right amounts vary by dog and are best set with a vet.\n\n```json\n{\"labels\": [\"Short walks\", \"Indoor play\", \"Sniff games\", \"Brushing and check-over\"], \"values\": [30, 15, 10, 10]}\n```",
-      "Illustrative split of a winter routine"),
+      "An example of how a two-hour prep session might be split, in minutes. Adjust it to the recipes chosen for the week.\n\n```json\n{\"labels\": [\"Chopping\", \"Roasting vegetables\", \"Cooking grains\", \"Cooking protein\", \"Sauces and packing\"], \"values\": [25, 35, 20, 25, 15]}\n```",
+      "Illustrative split of a prep session"),
     block("conclusion",
-      "Age does not have to mean a hard winter. A warmer bed, gentler walks, and a quick daily paw check go a long way. Most older dogs still want to take part in everything; these small changes simply make that easier."),
+      "Meal prep does not need to be perfect or elaborate. A few ready ingredients and two good sauces turn every weeknight into a quick, satisfying dinner. Start small this Sunday, and by Thursday the extra time will speak for itself."),
   ];
   return d;
 }

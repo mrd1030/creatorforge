@@ -178,7 +178,7 @@ export default function Newsletter() {
             </div>
             <div>
               <Label>Intro</Label>
-              <Textarea rows={3} value={nl.introText} onChange={e => update({ introText: e.target.value })} placeholder="Hey friends — a few pet-care reads for you this week…" data-testid="newsletter-intro-input" />
+              <Textarea rows={3} value={nl.introText} onChange={e => update({ introText: e.target.value })} placeholder="Hey friends, a few good reads for you this week…" data-testid="newsletter-intro-input" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div className="sm:col-span-3"><Label className="text-xs text-muted-foreground">Header image prompt</Label>
@@ -251,7 +251,7 @@ export default function Newsletter() {
           <Card><CardContent className="p-4">
             <Label>Outro / closing</Label>
             <Textarea rows={3} value={nl.outroText} onChange={e => update({ outroText: e.target.value })} className="mt-1.5"
-              placeholder="Thanks for reading, friends. Give your pet a scratch from me." data-testid="newsletter-outro-input" />
+              placeholder="Thanks for reading, friends. See you next week." data-testid="newsletter-outro-input" />
             </CardContent></Card>
           </div>
 

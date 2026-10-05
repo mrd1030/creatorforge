@@ -129,7 +129,7 @@ export default function NewsletterBuilder({ draft, setDraft }: Props) {
       <div className="rounded-xl border border-border bg-card p-4">
         <Label className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Intro</Label>
         <Textarea rows={3} value={n.introText} onChange={e => updateNL({ introText: e.target.value })}
-          placeholder="Hey friends — three pet-care reads for you this week…" className="mt-2"
+          placeholder="Hey friends, three good reads for you this week…" className="mt-2"
           data-testid="newsletter-intro-input" />
       </div>
 
@@ -213,7 +213,7 @@ export default function NewsletterBuilder({ draft, setDraft }: Props) {
       <div className="rounded-xl border border-border bg-card p-4">
         <Label className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Outro / Closing</Label>
         <Textarea rows={3} value={n.outroText} onChange={e => updateNL({ outroText: e.target.value })}
-          placeholder="Thanks for reading, friends. Give your pet a scratch from me. — your name" className="mt-2"
+          placeholder="Thanks for reading, friends. See you next week. Your name" className="mt-2"
           data-testid="newsletter-outro-input" />
       </div>
 
