@@ -10,17 +10,17 @@ function block(type: BlockType, content: string, note = ""): Block {
 }
 
 export function sampleDraft(): Draft {
-  const d = newDraft("real-person");
+  const d = newDraft("professional-educator");
   d.brief = {
     ...d.brief,
     niche: "Pet Care",
     topic: "Keeping a senior dog comfortable through the cold months",
-    audience: "Owners of dogs aged 8 and up who are noticing their dog slow down as the weather turns cold.",
+    audience: "Owners of dogs aged 8 and up whose dogs are slowing down as the weather turns cold.",
     length: "medium",
-    keyPoints: "- Why cold, damp weather is harder on older joints\n- Adjusting walks without cutting exercise\n- Warm, supportive places to rest\n- Paw and coat care in winter\n- Signs that mean it's time to call the vet",
-    angle: "Practical and reassuring: small changes at home make the biggest difference, and none of them need special gear.",
+    keyPoints: "- Why cold, damp weather is harder on older joints\n- Adjusting walks without cutting exercise\n- Warm, supportive places to rest\n- Paw and coat care in winter\n- Signs that call for a vet visit",
+    angle: "Practical and calm: small changes at home make the biggest difference, and none of them require special gear.",
     focusKeyword: "senior dog winter care",
-    metaDescription: "Senior dog winter care made simple: gentler walks, warm resting spots, paw care, and the signs that mean your older dog should see the vet this season.",
+    metaDescription: "Senior dog winter care, simplified: shorter walks, warm resting spots, paw care, and the warning signs that mean an older dog should see a vet this season.",
     categories: ["Dogs", "Pet Care"],
     tags: ["senior-dogs", "winter", "dog-health", "joint-care"],
     slug: "senior-dog-winter-care",
@@ -32,22 +32,22 @@ export function sampleDraft(): Draft {
   };
   d.affiliate = { ...d.affiliate, enabled: false };
   d.blocks = [
-    block("title", "How to Keep a Senior Dog Comfortable Through the Cold Months"),
+    block("title", "Senior Dogs and Cold Weather: A Practical Comfort Guide"),
     block("prologue",
-      "The first cold morning of the year has a way of showing you how old your dog has gotten. The stretch takes longer. The stairs get a second look. The good news is that most of what helps an older dog through winter happens at home, and none of it is complicated."),
+      "Cold weather often makes a dog's age more visible. Stretches take longer, stairs get a second look, and the first walk of the morning starts slowly. Most of what helps an older dog through winter happens at home, and very little of it is complicated."),
     block("paragraph",
-      "Cold, damp air tends to make stiff joints feel stiffer, so an older dog who moved fine in September can look creaky by December. That doesn't mean they need less activity. Movement keeps muscles strong and joints working. What changes is the shape of the day: shorter outings, a slower warm-up, and a soft, warm place to recover afterward. Think of it as adjusting the routine rather than shrinking it."),
+      "Cold, damp air tends to make stiff joints feel stiffer, so a dog who moved easily in early autumn can seem creaky by midwinter. That is not a reason to cut activity. Regular movement keeps muscles strong and joints working. What changes is the structure of the day: shorter outings, a slower warm-up, and a soft, warm place to recover afterward. The goal is to adjust the routine, not shrink it."),
     block("tips",
-      "- Swap one long walk for two or three short ones, and let the first few minutes be slow.\n- Move the bed away from drafts and cold floors, and add a thick fleece or orthopedic pad.\n- Rinse and dry paws after walks on salted or gritted roads.\n- Keep nails trimmed so feet grip well on slick floors, and add rugs where they slip.\n- If your dog has a thin coat or shivers outside, a simple fitted coat is worth trying.\n- Keep fresh water easy to reach; some older dogs drink less in cold weather."),
+      "- Replace one long walk with two or three shorter ones, starting at an easy pace.\n- Keep beds away from drafts and cold floors, and add a thick fleece or orthopedic pad.\n- Rinse and dry paws after walks on salted or gritted roads.\n- Keep nails trimmed for better grip, and lay rugs over slippery floors.\n- Consider a fitted coat for thin-coated dogs or dogs that shiver outdoors.\n- Place fresh water close to resting spots, since some older dogs drink less in cold weather."),
     block("key-facts",
-      "- Many older dogs feel joint stiffness more in cold, damp weather.\n- Shorter, more frequent walks are usually easier on aging joints than one long one.\n- Road salt and ice can dry out and crack paw pads.\n- Changes in appetite, thirst, sleep, or mobility are worth a vet visit rather than waiting.\n- Many vets suggest checkups twice a year for senior dogs."),
+      "- Many older dogs show more joint stiffness in cold, damp weather.\n- Shorter, more frequent walks are usually easier on aging joints than one long one.\n- Road salt and ice can dry out and crack paw pads.\n- Changes in appetite, thirst, sleep, or mobility warrant a vet visit.\n- Many vets recommend checkups twice a year for senior dogs."),
     block("table",
-      "| Area | What to watch for | Easy fix |\n| --- | --- | --- |\n| Joints | Slow to stand, stiff first steps | Gentle warm-up walk, padded bed |\n| Paws | Dry or cracked pads, licking | Rinse after walks, paw balm |\n| Sleeping spot | Drafts, cold tile floor | Raise the bed, add a blanket |\n| Floors | Slipping on hard surfaces | Rugs or runners on main paths |\n| Water | Bowl left untouched | Fresh water near the bed |"),
+      "| Area | What to watch for | Simple fix |\n| --- | --- | --- |\n| Joints | Slow to stand, stiff first steps | Gentle warm-up walk, padded bed |\n| Paws | Dry or cracked pads, licking | Rinse after walks, paw balm |\n| Sleeping spot | Drafts, cold tile floor | Raised bed, extra blanket |\n| Floors | Slipping on hard surfaces | Rugs or runners on main paths |\n| Water | Bowl left untouched | Fresh water near the bed |"),
     block("chart",
-      "An example of how a winter day's activity might be split for an older dog, in minutes. Your vet can help you set the right amounts for yours.\n\n```json\n{\"labels\": [\"Short walks\", \"Indoor play\", \"Sniff games\", \"Brushing and check-over\"], \"values\": [30, 15, 10, 10]}\n```",
+      "An example split of a winter day's activity for an older dog, in minutes. The right amounts vary by dog and are best set with a vet.\n\n```json\n{\"labels\": [\"Short walks\", \"Indoor play\", \"Sniff games\", \"Brushing and check-over\"], \"values\": [30, 15, 10, 10]}\n```",
       "Illustrative split of a winter routine"),
     block("conclusion",
-      "Getting older doesn't have to mean a hard winter. A warmer bed, gentler walks, and a quick look at their paws each day go a long way. Your dog will still want to be part of everything. You're just making it a little easier for them to say yes."),
+      "Age does not have to mean a hard winter. A warmer bed, gentler walks, and a quick daily paw check go a long way. Most older dogs still want to take part in everything; these small changes simply make that easier."),
   ];
   return d;
 }
