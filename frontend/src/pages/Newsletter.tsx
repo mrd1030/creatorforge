@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import {
@@ -13,30 +14,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { loadNewsletter, saveNewsletter, loadDrafts, uid } from "@/lib/storage";
-import { generateImagePrompt, sendEmail } from "@/lib/api";
+import { generateImagePrompt, generateNewsletterPreview, sendEmail } from "@/lib/api";
 import { APP_NAME } from "@/lib/branding";
-import { articleSlug, slugify } from "@/lib/seo";
+import { slugify } from "@/lib/seo";
+import { cardLink, draftToPreview } from "@/lib/newsletter";
 import {
   standaloneNewsletterHtml, standaloneNewsletterMarkdown, newsletterPlainText,
   copyToClipboard, downloadFile,
 } from "@/lib/exports";
 import type { StandaloneNewsletter, NewsletterPreview, Draft } from "@/types";
 
-
-function draftToPreview(d: Draft): NewsletterPreview {
-  const title = d.blocks.find(b => b.type === "title")?.content || d.brief.topic || "Untitled article";
-  const prologue = d.blocks.find(b => b.type === "prologue")?.content || "";
-  return {
-    id: uid("nv"),
-    title,
-    summary: d.brief.metaDescription || prologue.slice(0, 240),
-    ctaText: "Read the full guide",
-    ctaLink: `/blog/${articleSlug(d)}`,
-    imagePrompt: d.headerImage.prompt || "",
-    imageAlt: d.headerImage.alt || "",
-    sourceDraftId: d.id,
-  };
-}
 
 export default function Newsletter() {
   const [nl, setNl] = useState<StandaloneNewsletter>(loadNewsletter());
@@ -104,6 +91,26 @@ export default function Newsletter() {
     } catch (e: any) { toast.error("Failed", { id: t, description: e?.message }); }
   };
 
+  // Rewrites a card's summary with AI, from its source article when it has one.
+  const writeSummary = async () => {
+    if (!editingPreview) return;
+    const src = editingPreview.sourceDraftId ? loadDrafts().find(d => d.id === editingPreview.sourceDraftId) : undefined;
+    const t = toast.loading("Writing a summary…");
+    try {
+      const r = await generateNewsletterPreview({
+        title: editingPreview.title,
+        metaDescription: src?.brief.metaDescription || editingPreview.summary,
+        keyPoints: src?.brief.keyPoints || "",
+        headerImagePrompt: editingPreview.imagePrompt,
+        styleId: "newsletter",
+      });
+      updatePreview({ summary: r.summary || editingPreview.summary, ctaText: r.ctaText || editingPreview.ctaText });
+      toast.success("Summary ready", { id: t });
+    } catch (e: any) { toast.error("Failed", { id: t, description: e?.message }); }
+  };
+
+  const linklessCards = [nl.featured, ...nl.previews].filter((p): p is NewsletterPreview => !!p && !cardLink(p)).length;
+
   const exports: Record<string, { label: string; ext: string; mime: string; content: () => string }> = {
     html: { label: "Email HTML", ext: "html", mime: "text/html", content: () => standaloneNewsletterHtml(nl) },
     markdown: { label: "Markdown", ext: "md", mime: "text/markdown", content: () => standaloneNewsletterMarkdown(nl) },
@@ -151,7 +158,12 @@ export default function Newsletter() {
         </div>
         <div className="font-display text-base leading-tight truncate">{p.title}</div>
         <div className="text-xs text-muted-foreground line-clamp-2">{p.summary || <span className="italic opacity-60">No summary yet — click edit.</span>}</div>
-        <div className="mt-1 inline-flex"><span className="text-[10px] bg-secondary/15 text-secondary px-2 py-0.5 rounded-full">{p.ctaText || "Read more"}</span></div>
+        <div className="mt-1 flex items-center gap-2 min-w-0">
+          {cardLink(p)
+            ? <span className="text-[10px] bg-secondary/15 text-secondary px-2 py-0.5 rounded-full shrink-0">{p.ctaText || "Read more"}</span>
+            : <span className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full shrink-0" data-testid="card-no-link">No link</span>}
+          {cardLink(p) && <span className="text-[10px] text-muted-foreground truncate">{cardLink(p)}</span>}
+        </div>
       </div>
     </div>
   );
@@ -165,6 +177,13 @@ export default function Newsletter() {
           <p className="text-sm text-muted-foreground">Pull articles from My Drafts into a beehiiv / Substack-ready email.</p>
         </div>
       </div>
+
+      {linklessCards > 0 && (
+        <div className="mb-5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm" data-testid="newsletter-missing-links">
+          {linklessCards === 1 ? "1 card has" : `${linklessCards} cards have`} no link, so readers can't click through to the article.
+          Set your <Link to="/settings" className="underline font-medium">Article URL in Settings</Link>, or edit the card and paste the full URL.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Builder */}
@@ -325,7 +344,9 @@ export default function Newsletter() {
           {editingPreview && (
             <div className="space-y-3">
               <div><Label>Title</Label><Input value={editingPreview.title} onChange={e => updatePreview({ title: e.target.value })} data-testid="preview-title-input" /></div>
-              <div><Label>Summary</Label><Textarea rows={3} value={editingPreview.summary} onChange={e => updatePreview({ summary: e.target.value })} data-testid="preview-summary-input" /></div>
+              <div><Label>Summary</Label><Textarea rows={3} value={editingPreview.summary} onChange={e => updatePreview({ summary: e.target.value })} data-testid="preview-summary-input" />
+                <Button size="sm" variant="ghost" className="mt-1" onClick={writeSummary} data-testid="preview-ai-summary-btn"><Sparkles className="w-3.5 h-3.5 mr-1.5" /> Write summary with AI</Button>
+              </div>
               <div><Label>Header image prompt</Label><Textarea rows={3} value={editingPreview.imagePrompt} onChange={e => updatePreview({ imagePrompt: e.target.value })} data-testid="preview-imgprompt-input" /></div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={regenImg} data-testid="preview-regen-img-btn"><Sparkles className="w-3.5 h-3.5 mr-1.5" /> Regenerate prompt</Button>
@@ -333,8 +354,14 @@ export default function Newsletter() {
               <div><Label>Image alt text</Label><Input value={editingPreview.imageAlt} onChange={e => updatePreview({ imageAlt: e.target.value })} data-testid="preview-alt-input" /></div>
               <div className="grid grid-cols-2 gap-2">
                 <div><Label>CTA text</Label><Input value={editingPreview.ctaText} onChange={e => updatePreview({ ctaText: e.target.value })} data-testid="preview-cta-text-input" /></div>
-                <div><Label>CTA link</Label><Input value={editingPreview.ctaLink} onChange={e => updatePreview({ ctaLink: e.target.value })} data-testid="preview-cta-link-input" /></div>
+                <div><Label>Link</Label><Input value={editingPreview.ctaLink} onChange={e => updatePreview({ ctaLink: e.target.value })}
+                  placeholder={cardLink(editingPreview) || "https://…"} data-testid="preview-cta-link-input" /></div>
               </div>
+              <p className="text-[11px] text-muted-foreground">
+                {cardLink(editingPreview)
+                  ? `Links to ${cardLink(editingPreview)}`
+                  : "No link yet. Paste the full article URL, or set your Article URL in Settings so cards made from articles link automatically."}
+              </p>
             </div>
           )}
           <DialogFooter>

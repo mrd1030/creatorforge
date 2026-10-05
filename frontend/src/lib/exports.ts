@@ -3,6 +3,7 @@ import { marked } from "marked";
 import { parseChartBlock, chartToSvg } from "@/lib/chart";
 import { loadSettings } from "@/lib/storage";
 import { articleSlug, articleTitle, isAbsoluteUrl, seoTitle } from "@/lib/seo";
+import { cardLink } from "@/lib/newsletter";
 
 marked.setOptions({ gfm: true, breaks: true });
 
@@ -188,53 +189,14 @@ export function toJson(d: Draft): string {
   return JSON.stringify(d, null, 2);
 }
 
-export function toNewsletterMarkdown(d: Draft): string {
-  const n = d.newsletter;
-  const header = n.useArticleHeader ? d.headerImage : n.headerImage;
-  const lines: string[] = [];
-  if (header.url || header.prompt) {
-    lines.push(`![${header.alt || "Newsletter header"}](${header.url || "https://placehold.co/1200x600"})\n`);
-  }
-  if (n.introText) lines.push(`${n.introText}\n`);
-  n.previews.forEach((p, i) => {
-    lines.push(`---\n`);
-    lines.push(`## ${i + 1}. ${p.title}\n`);
-    lines.push(`${p.summary}\n`);
-    lines.push(`[${p.ctaText || "Read more"}](${p.ctaLink || "#"})\n`);
-  });
-  if (n.outroText) {
-    lines.push(`---\n`);
-    lines.push(`${n.outroText}\n`);
-  }
-  return lines.join("\n");
-}
+// ---- Newsletter exports (Newsletter page) ----
 
-export function toNewsletterHtml(d: Draft): string {
-  const n = d.newsletter;
-  const header = n.useArticleHeader ? d.headerImage : n.headerImage;
-  const previews = n.previews.map((p, i) => `
-    <tr><td style="padding:24px 0;border-top:1px solid #e5e0d7;">
-      <h2 style="font-family:Georgia,serif;font-size:22px;margin:0 0 8px;color:#2C1E16;">${i + 1}. ${escapeHtml(p.title)}</h2>
-      <p style="font-size:15px;line-height:1.6;color:#5C4D43;margin:0 0 12px;">${escapeHtml(p.summary)}</p>
-      <a href="${escapeHtml(p.ctaLink || "#")}" style="display:inline-block;background:#C86F53;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">${escapeHtml(p.ctaText || "Read more")}</a>
-    </td></tr>`).join("");
-  return `<!doctype html>
-<html><body style="margin:0;background:#F9F7F1;font-family:-apple-system,Helvetica,sans-serif;color:#2C1E16;">
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:620px;margin:0 auto;padding:32px 20px;">
-  ${header.url || header.prompt ? `<tr><td><img src="${escapeHtml(header.url || "https://placehold.co/1200x600")}" alt="${escapeHtml(header.alt || "")}" style="width:100%;border-radius:12px;display:block;"/></td></tr>` : ""}
-  ${n.introText ? `<tr><td style="padding:24px 0;font-size:16px;line-height:1.7;">${escapeHtml(n.introText).replace(/\n/g, "<br/>")}</td></tr>` : ""}
-  ${previews}
-  ${n.outroText ? `<tr><td style="padding:24px 0;border-top:1px solid #e5e0d7;font-size:15px;line-height:1.7;color:#5C4D43;">${escapeHtml(n.outroText).replace(/\n/g, "<br/>")}</td></tr>` : ""}
-</table>
-</body></html>`;
-}
-
-// ---- Standalone Newsletter exports (Newsletter page) ----
 function previewMd(p: NewsletterPreview, idx?: number, featured = false): string {
   const heading = featured ? `## ⭐ ${p.title}` : `### ${idx}. ${p.title}`;
   const lines = [heading, ""];
   if (p.summary) lines.push(p.summary, "");
-  lines.push(`[${p.ctaText || "Read more"}](${p.ctaLink || "#"})`, "");
+  const link = cardLink(p);
+  if (link) lines.push(`[${p.ctaText || "Read more"}](${link})`, "");
   return lines.join("\n");
 }
 
@@ -258,7 +220,7 @@ function previewHtml(p: NewsletterPreview, label: string, featured = false): str
       ${p.imageAlt || p.imagePrompt ? `<div style="font-size:11px;color:#9b8b7e;margin:0 0 8px;font-style:italic;">[image: ${escapeHtml(p.imageAlt || p.imagePrompt)}]</div>` : ""}
       <h2 style="font-family:Georgia,serif;font-size:${titleSize};margin:0 0 8px;color:#2C1E16;">${label}${escapeHtml(p.title)}</h2>
       <p style="font-size:15px;line-height:1.6;color:#5C4D43;margin:0 0 12px;">${escapeHtml(p.summary)}</p>
-      <a href="${escapeHtml(p.ctaLink || "#")}" style="display:inline-block;background:#C86F53;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">${escapeHtml(p.ctaText || "Read more")}</a>
+      ${cardLink(p) ? `<a href="${escapeHtml(cardLink(p))}" style="display:inline-block;background:#C86F53;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">${escapeHtml(p.ctaText || "Read more")}</a>` : ""}
     </td></tr>`;
 }
 
@@ -281,7 +243,7 @@ export function standaloneNewsletterHtml(n: StandaloneNewsletter): string {
 // Plain paste version for beehiiv / Substack composers (clean, no HTML wrapper).
 export function newsletterPlainText(n: StandaloneNewsletter): string {
   const block = (p: NewsletterPreview, prefix = "") =>
-    [`${prefix}${p.title}`, p.summary, `→ ${p.ctaText || "Read more"}: ${p.ctaLink || "#"}`].filter(Boolean).join("\n");
+    [`${prefix}${p.title}`, p.summary, cardLink(p) ? `→ ${p.ctaText || "Read more"}: ${cardLink(p)}` : ""].filter(Boolean).join("\n");
   const parts: string[] = [];
   if (n.title) parts.push(n.title.toUpperCase(), "");
   if (n.introText) parts.push(n.introText, "");
