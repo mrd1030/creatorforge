@@ -15,13 +15,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { loadNewsletter, saveNewsletter, loadDrafts, uid } from "@/lib/storage";
 import { generateImagePrompt, sendEmail } from "@/lib/api";
 import { APP_NAME } from "@/lib/branding";
+import { articleSlug, slugify } from "@/lib/seo";
 import {
   standaloneNewsletterHtml, standaloneNewsletterMarkdown, newsletterPlainText,
   copyToClipboard, downloadFile,
 } from "@/lib/exports";
 import type { StandaloneNewsletter, NewsletterPreview, Draft } from "@/types";
 
-const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
 
 function draftToPreview(d: Draft): NewsletterPreview {
   const title = d.blocks.find(b => b.type === "title")?.content || d.brief.topic || "Untitled article";
@@ -31,7 +31,7 @@ function draftToPreview(d: Draft): NewsletterPreview {
     title,
     summary: d.brief.metaDescription || prologue.slice(0, 240),
     ctaText: "Read the full guide",
-    ctaLink: `/blog/${slug(title)}`,
+    ctaLink: `/blog/${articleSlug(d)}`,
     imagePrompt: d.headerImage.prompt || "",
     imageAlt: d.headerImage.alt || "",
     sourceDraftId: d.id,
@@ -111,7 +111,7 @@ export default function Newsletter() {
   };
 
   const doCopy = async () => { await copyToClipboard(exports[exportTab].content()); toast.success("Copied to clipboard"); };
-  const doDownload = () => { const e = exports[exportTab]; downloadFile(`${slug(nl.title || "newsletter")}.${e.ext}`, e.content(), e.mime); };
+  const doDownload = () => { const e = exports[exportTab]; downloadFile(`${slugify(nl.title) || "newsletter"}.${e.ext}`, e.content(), e.mime); };
 
   const sendTest = async () => {
     const email = testEmail.trim();

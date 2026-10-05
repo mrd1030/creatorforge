@@ -684,7 +684,7 @@ async def process_article(body: ProcessArticleIn):
         '  "keyPoints": "- bullet summary of the main points",\n'
         '  "angle": "the author\'s perspective in 1-2 sentences",\n'
         '  "focusKeyword": "primary SEO keyword",\n'
-        '  "metaDescription": "a 150-160 character meta description",\n'
+        f'  "metaDescription": "a {META_DESCRIPTION_MIN}-{META_DESCRIPTION_MAX} character meta description",\n'
         '  "tags": ["kebab-case-tags"],\n'
         '  "categories": ["1-3 fitting categories"]\n'
         "}\n\n"
@@ -726,6 +726,8 @@ async def process_article(body: ProcessArticleIn):
     facts_parts = [p for p in facts_parts if p]
     if facts_parts:
         data["factsToUse"] = "\n".join(facts_parts)
+    if "metaDescription" in data:
+        data["metaDescription"] = _fit(str(data["metaDescription"]), META_DESCRIPTION_MAX)
 
     return data
 
@@ -745,6 +747,31 @@ async def humanize(body: HumanizeIn):
     return {"text": text.strip()}
 
 
+# Search-snippet length targets. Google cuts titles at roughly 60 characters and meta
+# descriptions at roughly 160 (it measures pixels, so these are safe character budgets).
+SEO_TITLE_MAX = 60
+META_DESCRIPTION_MIN = 150
+META_DESCRIPTION_MAX = 160
+
+
+_DANGLING_WORDS = {"a", "an", "and", "or", "but", "the", "of", "to", "for", "with", "in", "on", "at", "by", "from", "that", "your", "my"}
+
+
+def _fit(text: str, max_chars: int) -> str:
+    """Trim to max_chars at a word boundary. Models miscount characters, so every
+    length-limited field is checked here instead of trusting the prompt."""
+    text = re.sub(r"\s+", " ", (text or "")).strip().strip('"').strip()
+    if len(text) <= max_chars:
+        return text
+    cut = text[:max_chars + 1]
+    cut = cut[:cut.rfind(" ")] if " " in cut else text[:max_chars]
+    # Don't end on a dangling connector ("...that works for").
+    words = cut.rstrip(" ,;:-").split(" ")
+    while len(words) > 1 and words[-1].lower() in _DANGLING_WORDS:
+        words.pop()
+    return " ".join(words).rstrip(" ,;:-")
+
+
 def _in_niche(niche: Optional[str]) -> str:
     """' in the X niche' for prompts, or '' when no specific niche was chosen."""
     n = (niche or "").strip()
@@ -757,7 +784,8 @@ async def generate_seo(body: SeoIn):
         f"You are an SEO assistant for warm, authentic articles{_in_niche(body.niche)}. "
         "Output STRICT JSON (no code fences, no preamble) with exactly these keys: "
         "focusKeyword (a 2-4 word primary search keyword phrase, lowercase), "
-        "metaDescription (a warm, specific description between 150 and 160 characters that naturally includes the focus keyword). "
+        f"seoTitle (a search result title of at most {SEO_TITLE_MAX} characters that starts with or includes the focus keyword), "
+        f"metaDescription (a warm, specific description between {META_DESCRIPTION_MIN} and {META_DESCRIPTION_MAX} characters that naturally includes the focus keyword). "
         "Do not invent statistics or claims."
     )
     user = (
@@ -779,7 +807,8 @@ async def generate_seo(body: SeoIn):
             raise HTTPException(500, "Failed to parse SEO output")
     return {
         "focusKeyword": str(data.get("focusKeyword", "")).strip(),
-        "metaDescription": str(data.get("metaDescription", "")).strip().strip('"'),
+        "seoTitle": _fit(str(data.get("seoTitle", "")), SEO_TITLE_MAX),
+        "metaDescription": _fit(str(data.get("metaDescription", "")), META_DESCRIPTION_MAX),
     }
 
 
@@ -787,14 +816,13 @@ async def generate_seo(body: SeoIn):
 async def generate_meta(body: MetaIn):
     system = (
         f"You write SEO meta descriptions for articles{_in_niche(body.niche)}. "
-        "Output a single meta description between 150 and 160 characters. "
+        f"Output a single meta description between {META_DESCRIPTION_MIN} and {META_DESCRIPTION_MAX} characters. "
         "Warm, specific, includes the focus keyword naturally if provided. "
         "No quotes. No preamble. Just the description."
     )
     user = f"TITLE: {body.title}\nFOCUS KEYWORD: {body.focusKeyword}\n\nARTICLE EXCERPT:\n{body.content[:2000]}"
     text = await llm_complete(system, user, max_tokens=200)
-    text = text.strip().strip('"').strip("'")
-    return {"text": text}
+    return {"text": _fit(text.strip().strip("'"), META_DESCRIPTION_MAX)}
 
 
 @api_router.post("/generate/image-prompt")
@@ -1010,7 +1038,7 @@ async def generate_brief(body: BriefGenerateIn):
         "- keyPoints (string): 4-6 bullet points (markdown list) covering what the article must address\n"
         "- angle (string): 2-3 sentences describing an honest, informed angle the writer can take\n"
         "- focusKeyword (string): a 2-4 word lowercase SEO keyword phrase\n"
-        "- metaDescription (string): a warm, specific 150-160 character meta description that includes the focus keyword\n"
+        f"- metaDescription (string): a warm, specific {META_DESCRIPTION_MIN}-{META_DESCRIPTION_MAX} character meta description that includes the focus keyword\n"
         "- categories (array of strings): 1-3 relevant categories that fit this niche and topic\n"
         "- tags (array of strings): 3-6 lowercase hyphenated tags relevant to the topic\n"
         "Do NOT invent statistics. Be specific to the topic and niche. Output ONLY raw JSON, no fences, no preamble."
@@ -1038,7 +1066,7 @@ async def generate_brief(body: BriefGenerateIn):
         "keyPoints": str(data.get("keyPoints", "")).strip(),
         "angle": str(data.get("angle", "")).strip(),
         "focusKeyword": str(data.get("focusKeyword", "")).strip(),
-        "metaDescription": str(data.get("metaDescription", "")).strip().strip('"'),
+        "metaDescription": _fit(str(data.get("metaDescription", "")), META_DESCRIPTION_MAX),
         "categories": [str(c) for c in data.get("categories", []) if isinstance(c, str)],
         "tags": [str(t).lower().replace(" ", "-") for t in data.get("tags", []) if isinstance(t, str)],
         "factsToUse": facts,

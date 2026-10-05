@@ -21,6 +21,7 @@ export function emptyBrief(): Brief {
     keyPoints: "", angle: "", extra: "",
     focusKeyword: "", metaDescription: "", factsToUse: "",
     categories: [], tags: [], slug: "", canonicalUrl: "",
+    seoTitle: "", noIndex: false,
     niche: "General",
   };
 }

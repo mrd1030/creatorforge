@@ -2,6 +2,7 @@ import type { Draft, Block, StandaloneNewsletter, NewsletterPreview } from "@/ty
 import { marked } from "marked";
 import { parseChartBlock, chartToSvg } from "@/lib/chart";
 import { loadSettings } from "@/lib/storage";
+import { articleSlug, articleTitle, isAbsoluteUrl, seoTitle } from "@/lib/seo";
 
 marked.setOptions({ gfm: true, breaks: true });
 
@@ -31,10 +32,6 @@ function blockToMarkdown(b: Block): string {
   }
 }
 
-function toSlug(title: string): string {
-  return title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
-}
-
 function toDateStr(ts: number): string {
   return new Date(ts).toISOString().slice(0, 10);
 }
@@ -44,9 +41,8 @@ function q(s: string): string {
 }
 
 function buildFrontmatter(d: Draft): string {
-  const titleBlock = d.blocks.find(b => b.type === "title");
-  const title = titleBlock?.content?.trim() || d.brief.topic || "Untitled";
-  const slug = d.brief.slug || toSlug(title);
+  const title = articleTitle(d);
+  const slug = articleSlug(d);
   const today = toDateStr(Date.now());
   const created = toDateStr(d.createdAt);
   const updated = toDateStr(d.updatedAt);
@@ -59,6 +55,7 @@ function buildFrontmatter(d: Draft): string {
   const lines = [
     "---",
     `title: ${q(title)}`,
+    `seoTitle: ${q(seoTitle(d))}`,
     `slug: ${q(slug)}`,
     `date: ${q(created)}`,
     `lastUpdated: ${q(updated)}`,
@@ -72,7 +69,7 @@ function buildFrontmatter(d: Draft): string {
     ...(authorName ? [`author: ${q(authorName)}`] : []),
     `status: "published"`,
     `affiliate: ${d.affiliate.enabled}`,
-    `noIndex: false`,
+    `noIndex: ${!!d.brief.noIndex}`,
     `canonicalUrl: ${q(d.brief.canonicalUrl || "")}`,
     `readingTime: ${rt}`,
     "---",
@@ -149,18 +146,29 @@ function segmentsToHtml(d: Draft): string {
 }
 
 export function toHtml(d: Draft): string {
-  const titleBlock = d.blocks.find(b => b.type === "title");
-  const title = titleBlock?.content?.trim() || d.brief.topic || "Untitled";
+  const title = articleTitle(d);
+  const headTitle = seoTitle(d);
+  const canonical = isAbsoluteUrl(d.brief.canonicalUrl) ? d.brief.canonicalUrl.trim() : "";
+  const head = [
+    `<meta charset="utf-8" />`,
+    `<meta name="viewport" content="width=device-width, initial-scale=1" />`,
+    `<title>${escapeHtml(headTitle)}</title>`,
+    `<meta name="description" content="${escapeHtml(d.brief.metaDescription)}" />`,
+    d.brief.noIndex ? `<meta name="robots" content="noindex, nofollow" />` : "",
+    canonical ? `<link rel="canonical" href="${escapeHtml(canonical)}" />` : "",
+    `<meta property="og:type" content="article" />`,
+    `<meta property="og:title" content="${escapeHtml(headTitle)}" />`,
+    `<meta property="og:description" content="${escapeHtml(d.brief.metaDescription)}" />`,
+    canonical ? `<meta property="og:url" content="${escapeHtml(canonical)}" />` : "",
+    d.headerImage.url ? `<meta property="og:image" content="${escapeHtml(d.headerImage.url)}" />` : "",
+    d.headerImage.url && d.headerImage.alt ? `<meta property="og:image:alt" content="${escapeHtml(d.headerImage.alt)}" />` : "",
+    `<meta name="twitter:card" content="${d.headerImage.url ? "summary_large_image" : "summary"}" />`,
+    d.brief.tags.length ? `<meta name="keywords" content="${escapeHtml(d.brief.tags.join(", "))}" />` : "",
+  ].filter(Boolean).join("\n");
   return `<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<title>${escapeHtml(title)}</title>
-<meta name="description" content="${escapeHtml(d.brief.metaDescription)}" />
-<meta property="og:title" content="${escapeHtml(title)}" />
-<meta property="og:description" content="${escapeHtml(d.brief.metaDescription)}" />
-${d.headerImage.url ? `<meta property="og:image" content="${escapeHtml(d.headerImage.url)}" />` : ""}
-${d.brief.tags.length ? `<meta name="keywords" content="${escapeHtml(d.brief.tags.join(", "))}" />` : ""}
+${head}
 </head>
 <body>
 <article>

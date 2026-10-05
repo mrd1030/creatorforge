@@ -13,6 +13,7 @@ import { getAllStyles, getStyleInstructions } from "@/lib/styles";
 import { loadCustomCategories, saveCustomCategories, uid } from "@/lib/storage";
 import { generateBrief, generateFacts, generateImagePrompt, generateMeta, generateSeo, processArticle } from "@/lib/api";
 import { Loader2 } from "lucide-react";
+import { articleSlug, articleTitle as titleOf, charCount, slugify, META_DESCRIPTION_MAX, META_DESCRIPTION_MIN, SEO_TITLE_MAX } from "@/lib/seo";
 import type { Draft, StyleId, Block } from "@/types";
 
 interface Props {
@@ -161,7 +162,11 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
     const t = toast.loading("Generating SEO keyword + description…");
     try {
       const r = await generateSeo({ title, topic: draft.brief.topic, content: articleContent(), focusKeyword: draft.brief.focusKeyword, niche });
-      updateBrief({ focusKeyword: r.focusKeyword || draft.brief.focusKeyword, metaDescription: r.metaDescription || draft.brief.metaDescription });
+      updateBrief({
+        focusKeyword: r.focusKeyword || draft.brief.focusKeyword,
+        seoTitle: r.seoTitle || draft.brief.seoTitle,
+        metaDescription: r.metaDescription || draft.brief.metaDescription,
+      });
       toast.success("SEO fields ready", { id: t });
     } catch (e: any) { toast.error("Failed", { id: t, description: e?.message }); }
     finally { setSeoBusy(false); }
@@ -256,8 +261,10 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
     } finally { setImportBusy(false); }
   };
 
-  const metaLen = draft.brief.metaDescription.length;
-  const metaOk = metaLen >= 150 && metaLen <= 160;
+  const metaLen = charCount(draft.brief.metaDescription);
+  const metaOk = metaLen >= META_DESCRIPTION_MIN && metaLen <= META_DESCRIPTION_MAX;
+  const seoTitleText = draft.brief.seoTitle?.trim() || "";
+  const seoTitleLen = charCount(seoTitleText || titleOf(draft));
   const toggle = (k: string) => setOpenSection(prev => prev === k ? "" : k);
 
   return (
@@ -408,27 +415,44 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
         <Sec open={openSection === "seo"} onToggle={() => toggle("seo")} k="seo" title="SEO & Metadata">
           <div className="flex justify-end">
             <Button variant="outline" size="sm" onClick={onGenerateSeo} disabled={seoBusy} data-testid="seo-ai-generate-btn">
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" /> {seoBusy ? "Generating…" : "AI Generate keyword + description"}
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" /> {seoBusy ? "Generating…" : "AI Generate keyword, title + description"}
             </Button>
           </div>
           <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <Label htmlFor="seo-title">SEO Title</Label>
+              <span className={`text-xs font-mono ${seoTitleLen > SEO_TITLE_MAX ? "text-destructive" : "text-muted-foreground"}`} data-testid="seo-title-char-counter">
+                {seoTitleLen}/{SEO_TITLE_MAX}
+              </span>
+            </div>
+            <Input id="seo-title" value={draft.brief.seoTitle || ""} onChange={e => updateBrief({ seoTitle: e.target.value })}
+              placeholder={titleOf(draft)} data-testid="seo-title-input" />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {seoTitleText ? "Shown in search results and browser tabs." : "Empty, so search results use the article title."}
+              {seoTitleLen > SEO_TITLE_MAX && " Over 60 characters gets cut off in Google."}
+            </p>
+          </div>
+          <div>
             <Label htmlFor="slug">Slug</Label>
-            <Input id="slug" value={draft.brief.slug} onChange={e => updateBrief({ slug: e.target.value })} placeholder="my-article-slug" data-testid="seo-slug-input" />
+            <Input id="slug" value={draft.brief.slug} onChange={e => updateBrief({ slug: e.target.value })}
+              onBlur={e => { const s = slugify(e.target.value); if (s !== e.target.value) updateBrief({ slug: s }); }}
+              placeholder={articleSlug(draft)} data-testid="seo-slug-input" />
+            <p className="text-[11px] text-muted-foreground mt-1">Lowercase letters, numbers and hyphens, up to 60 characters. Empty uses the title.</p>
           </div>
           <div>
             <Label htmlFor="kw">Focus Keyword</Label>
-            <Input id="kw" value={draft.brief.focusKeyword} onChange={e => updateBrief({ focusKeyword: e.target.value })} placeholder="bearded dragon diet" data-testid="seo-keyword-input" />
+            <Input id="kw" value={draft.brief.focusKeyword} onChange={e => updateBrief({ focusKeyword: e.target.value })} placeholder="monthly budget template" data-testid="seo-keyword-input" />
           </div>
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <Label htmlFor="meta">Meta Description <span className="text-destructive">*</span></Label>
-              <span className={`text-xs font-mono ${metaOk ? "text-secondary" : metaLen > 160 ? "text-destructive" : "text-muted-foreground"}`} data-testid="meta-char-counter">
-                {metaLen}/160
+              <span className={`text-xs font-mono ${metaOk ? "text-secondary" : metaLen > META_DESCRIPTION_MAX ? "text-destructive" : "text-muted-foreground"}`} data-testid="meta-char-counter">
+                {metaLen}/{META_DESCRIPTION_MAX}
               </span>
             </div>
             <Textarea id="meta" rows={3} value={draft.brief.metaDescription}
               onChange={e => updateBrief({ metaDescription: e.target.value })}
-              placeholder="A warm, specific 150–160 character description for search results."
+              placeholder="A warm, specific 150 to 160 character description for search results."
               data-testid="seo-meta-input"
             />
             <Button variant="ghost" size="sm" className="mt-2" onClick={onAutoMeta} data-testid="auto-meta-btn">
@@ -438,6 +462,16 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
           <div>
             <Label htmlFor="canonical">Canonical URL</Label>
             <Input id="canonical" value={draft.brief.canonicalUrl} onChange={e => updateBrief({ canonicalUrl: e.target.value })} placeholder="https://yourblog.com/blog/my-article" data-testid="seo-canonical-input" />
+            {draft.brief.canonicalUrl.trim() && !/^https?:\/\/\S+$/i.test(draft.brief.canonicalUrl.trim()) && (
+              <p className="text-[11px] text-destructive mt-1">Use a full URL starting with https://, or it's left out of exports.</p>
+            )}
+          </div>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <Label htmlFor="noindex">Hide from search engines</Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Adds noindex to exports. Leave off for normal posts.</p>
+            </div>
+            <Switch id="noindex" checked={!!draft.brief.noIndex} onCheckedChange={v => updateBrief({ noIndex: v })} data-testid="seo-noindex-switch" />
           </div>
         </Sec>
 
