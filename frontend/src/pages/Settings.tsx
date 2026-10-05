@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Sparkles, KeyRound, Wand2, Save, DatabaseZap } from "lucide-react";
-import { loadSanityToken, saveSanityToken, isSanityConfigured, SANITY_PROJECT_ID, SANITY_DATASET } from "@/lib/sanity";
+import { Plus, Pencil, Trash2, Sparkles, KeyRound, Wand2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,7 +27,6 @@ const blankStyle = (): CustomStyle => ({ id: uid("cstyle"), name: "", tagline: "
 export default function Settings() {
   const [styles, setStyles] = useState<CustomStyle[]>(loadCustomStyles());
   const [settings, setSettings] = useState<AppSettings>(loadSettings());
-  const [sanityToken, setSanityToken] = useState(loadSanityToken());
   const [editing, setEditing] = useState<CustomStyle | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -232,73 +230,6 @@ export default function Settings() {
                     <Input placeholder="xai-… (coming soon)" disabled data-testid="xai-key-input" />
                   </div>
                 </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Sanity CMS */}
-      <section className="mb-10">
-        <h2 className="font-display text-2xl mb-4">Sanity CMS</h2>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 grid place-items-center shrink-0">
-                <DatabaseZap className="w-5 h-5" />
-              </div>
-              <div className="flex-1">
-                <div className="font-display text-lg mb-1">Push directly to Sanity</div>
-                {!isSanityConfigured() && (
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Sanity push isn't configured for this deployment. Set <span className="font-mono text-xs">VITE_SANITY_PROJECT_ID</span> (and
-                    optionally <span className="font-mono text-xs">VITE_SANITY_DATASET</span>) in the frontend environment to enable it.
-                  </p>
-                )}
-                {isSanityConfigured() && (
-                  <>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Enter a Sanity API token with write access and you can push any article straight to your Content Lake as a draft — no copy-paste needed.
-                      Generate a token at <span className="font-mono text-xs">sanity.io/manage → project {SANITY_PROJECT_ID} → API → Tokens → Add API token (Editor role)</span>.
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 text-sm">
-                      <div className="rounded-lg bg-muted/50 px-3 py-2">
-                        <div className="text-xs text-muted-foreground mb-0.5">Project ID</div>
-                        <div className="font-mono font-medium">{SANITY_PROJECT_ID}</div>
-                      </div>
-                      <div className="rounded-lg bg-muted/50 px-3 py-2">
-                        <div className="text-xs text-muted-foreground mb-0.5">Dataset</div>
-                        <div className="font-mono font-medium">{SANITY_DATASET}</div>
-                      </div>
-                      <div className="rounded-lg bg-muted/50 px-3 py-2">
-                        <div className="text-xs text-muted-foreground mb-0.5">Document type</div>
-                        <div className="font-mono font-medium">post</div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 max-w-xl">
-                      <Input
-                        type="password"
-                        value={sanityToken}
-                        onChange={e => setSanityToken(e.target.value)}
-                        placeholder="sk… (Sanity API write token)"
-                        data-testid="sanity-token-input"
-                      />
-                      <Button
-                        onClick={() => {
-                          saveSanityToken(sanityToken);
-                          toast.success(sanityToken ? "Sanity token saved" : "Token cleared");
-                        }}
-                        variant="outline"
-                        data-testid="sanity-token-save-btn"
-                      >
-                        <Save className="w-4 h-4 mr-1.5" /> Save
-                      </Button>
-                    </div>
-                    {sanityToken && (
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2">Token saved. Push to Sanity will appear on the Finalize page.</p>
-                    )}
-                  </>
-                )}
               </div>
             </div>
           </CardContent>
