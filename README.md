@@ -4,7 +4,8 @@ CreatorForge is an AI-assisted content studio for writers. You build an article 
 block by block (intro, tips, key facts, references, CTA, etc.), pick a writing style, and the app
 generates each block with Claude, optionally grounded in facts you've pasted in or pulled from a
 live web search. Finished pieces can be exported as HTML, Markdown, MDX or JSON (ready for any
-blog or CMS) and previewed as a newsletter.
+blog or CMS) and collected into an email newsletter. Set your site's Article URL in Settings so
+newsletter links point at your published articles.
 
 ## Architecture
 

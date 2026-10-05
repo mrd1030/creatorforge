@@ -53,13 +53,13 @@ Full source code. Your own API keys. No subscription, no monthly fee to us.
 - **Import Existing Article.** Paste in something you already wrote and
   CreatorForge parses it back into editable blocks, carrying forward its real
   sources into Facts to Use.
-- **Export to 9 formats, one click.** HTML, Markdown, MDX, Structured JSON,
-  YouTube Script, Social Snippets, Email Newsletter (HTML or Markdown) — even the
-  full LLM prompt that generated the piece, for full transparency. Whatever your
+- **Export to 7 formats, one click.** HTML, Markdown, MDX, Structured JSON,
+  YouTube Script, Social Snippets, and even the full LLM prompt that generated the piece, for full transparency. Whatever your
   CMS or workflow expects, it's already there.
-- **Newsletter Builder.** Pull any draft in as a featured article, write an intro
-  and outro, and get a beehiiv/Substack-ready HTML email with a live preview —
-  send yourself a test before it goes out.
+- **Newsletter Builder.** Add any finished article with one click, pick a
+  featured story, let AI write the card summaries, and get a beehiiv/Substack-ready
+  email (HTML, Markdown or plain text) whose links point at your real article
+  URLs. Send yourself a test before it goes out.
 - **Responsive preview.** Check the Desktop and Mobile phone rendering of a
   finished piece side by side before you publish anywhere.
 - **Built-in rate limiting.** A basic per-IP limiter on generation/email endpoints

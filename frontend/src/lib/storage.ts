@@ -1,4 +1,4 @@
-import type { Draft, Brief, AffiliateConfig, HeaderImage, Newsletter, StyleId, CustomStyle, AppSettings, StandaloneNewsletter } from "@/types";
+import type { Draft, Brief, AffiliateConfig, HeaderImage, StyleId, CustomStyle, AppSettings, StandaloneNewsletter } from "@/types";
 import { DEFAULT_AFFILIATE_TEXT } from "@/lib/templates";
 
 const KEYS = {
@@ -32,16 +32,6 @@ export function emptyAffiliate(): AffiliateConfig {
   return { enabled: true, placement: "bottom-section", text: DEFAULT_AFFILIATE_TEXT };
 }
 
-export function emptyNewsletter(): Newsletter {
-  return {
-    headerImage: emptyHeader(),
-    introText: "",
-    outroText: "",
-    previews: [],
-    useArticleHeader: true,
-  };
-}
-
 export function newDraft(styleId?: StyleId): Draft {
   const now = Date.now();
   const settings = loadSettings();
@@ -58,7 +48,6 @@ export function newDraft(styleId?: StyleId): Draft {
     blocks: [],
     headerImage: emptyHeader(),
     affiliate: aff,
-    newsletter: emptyNewsletter(),
     versions: [],
   };
 }
@@ -135,7 +124,7 @@ export function deleteCustomStyle(id: string) {
 
 // ---- App settings ----
 export function defaultSettings(): AppSettings {
-  return { defaultStyleId: "real-person", defaultCategories: [], defaultAffiliateEnabled: false, defaultNiche: "General", authorName: "" };
+  return { defaultStyleId: "real-person", defaultCategories: [], defaultAffiliateEnabled: false, defaultNiche: "General", authorName: "", articleUrlPattern: "" };
 }
 export function loadSettings(): AppSettings {
   try {

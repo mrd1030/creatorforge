@@ -17,7 +17,6 @@ import type { Draft, StyleId, Block, BlockType } from "@/types";
 import BriefSidebar from "@/components/composer/BriefSidebar";
 import LayoutBuilder from "@/components/composer/LayoutBuilder";
 import EditPreview from "@/components/composer/EditPreview";
-import NewsletterBuilder from "@/components/composer/NewsletterBuilder";
 import RightSidebar from "@/components/composer/RightSidebar";
 
 export default function Composer() {
@@ -96,7 +95,6 @@ export default function Composer() {
 
   const onStyleChange = (sid: StyleId) => {
     setDraft(prev => prev ? { ...prev, styleId: sid } : prev);
-    if (sid === "newsletter") setActiveTab("newsletter");
   };
 
   const seedStarterBlocks = () => {
@@ -140,16 +138,12 @@ export default function Composer() {
                     <TabsList data-testid="composer-tabs">
                       <TabsTrigger value="layout" data-testid="tab-layout">Layout Builder</TabsTrigger>
                       <TabsTrigger value="edit" data-testid="tab-edit">Edit &amp; Preview</TabsTrigger>
-                      <TabsTrigger value="newsletter" data-testid="tab-newsletter">Newsletter</TabsTrigger>
                     </TabsList>
                     <TabsContent value="layout" className="mt-4">
                       <LayoutBuilder draft={draft} setDraft={setDraft} seedStarter={seedStarterBlocks} />
                     </TabsContent>
                     <TabsContent value="edit" className="mt-4">
                       <EditPreview draft={draft} setDraft={setDraft} />
-                    </TabsContent>
-                    <TabsContent value="newsletter" className="mt-4">
-                      <NewsletterBuilder draft={draft} setDraft={setDraft} />
                     </TabsContent>
                   </Tabs>
                 </CardContent>

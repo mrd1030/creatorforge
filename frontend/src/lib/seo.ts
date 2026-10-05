@@ -1,6 +1,7 @@
 // One source of truth for SEO lengths, slugs and titles, shared by the editor, Finalize,
 // and every export. The limits match backend/server.py.
 import type { Draft } from "@/types";
+import { loadSettings } from "@/lib/storage";
 
 // Google cuts titles at roughly 60 characters and meta descriptions at roughly 160.
 // It measures pixels, so these are safe character budgets rather than exact cutoffs.
@@ -45,4 +46,21 @@ export function articleSlug(d: Draft): string {
 
 export function isAbsoluteUrl(url: string | undefined): boolean {
   return /^https?:\/\/\S+$/i.test((url || "").trim());
+}
+
+// Fills "{slug}" in the site's article URL pattern. A pattern without "{slug}" is
+// treated as a base URL and the slug is appended. Returns "" unless the result is a
+// full http(s) URL, since relative links don't work in email.
+export function fillArticleUrl(pattern: string | undefined, slug: string): string {
+  const p = (pattern || "").trim();
+  if (!p) return "";
+  const url = p.includes("{slug}") ? p.split("{slug}").join(slug) : `${p.replace(/\/+$/, "")}/${slug}`;
+  return isAbsoluteUrl(url) ? url : "";
+}
+
+// The article's public address: its canonical URL if set, else the site pattern from
+// Settings with the slug filled in, else "" (unknown; callers should not invent one).
+export function articleUrl(d: Draft): string {
+  if (isAbsoluteUrl(d.brief.canonicalUrl)) return d.brief.canonicalUrl.trim();
+  return fillArticleUrl(loadSettings().articleUrlPattern, articleSlug(d));
 }

@@ -20,6 +20,7 @@ import {
   loadCustomStyles, upsertCustomStyle, deleteCustomStyle,
   loadSettings, saveSettings, loadCustomCategories, uid,
 } from "@/lib/storage";
+import { fillArticleUrl } from "@/lib/seo";
 import type { CustomStyle, AppSettings } from "@/types";
 
 const blankStyle = (): CustomStyle => ({ id: uid("cstyle"), name: "", tagline: "", vibe: "", systemPrompt: "" });
@@ -150,6 +151,27 @@ export default function Settings() {
                 className="max-w-md"
                 data-testid="author-name-input"
               />
+            </div>
+
+            <div>
+              <Label>Article URL</Label>
+              <p className="text-xs text-muted-foreground mb-1.5">
+                Where your articles are published. <span className="font-mono">{"{slug}"}</span> is replaced with each article's slug.
+                Used for newsletter links and the published URL. An article's Canonical URL, if set, always wins.
+              </p>
+              <Input
+                value={settings.articleUrlPattern || ""}
+                onChange={e => persistSettings({ articleUrlPattern: e.target.value })}
+                placeholder="https://yourblog.com/blog/{slug}"
+                className="max-w-md font-mono text-sm"
+                data-testid="article-url-pattern-input"
+              />
+              {settings.articleUrlPattern?.trim() && !fillArticleUrl(settings.articleUrlPattern, "example") && (
+                <p className="text-xs text-destructive mt-1">Use a full address starting with https://</p>
+              )}
+              {settings.articleUrlPattern?.trim() && fillArticleUrl(settings.articleUrlPattern, "example") && (
+                <p className="text-xs text-muted-foreground mt-1">Example: <span className="font-mono">{fillArticleUrl(settings.articleUrlPattern, "my-article")}</span></p>
+              )}
             </div>
 
             <div>

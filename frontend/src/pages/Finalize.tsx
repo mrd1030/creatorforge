@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import DOMPurify from "dompurify";
-import { ArrowLeft, Copy, Download, Smartphone, Monitor, Loader2, Wand2 } from "lucide-react";
+import { ArrowLeft, Copy, Download, Smartphone, Monitor, Loader2, Wand2, Mail } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,14 +13,14 @@ import { getDraft } from "@/lib/storage";
 import type { Draft } from "@/types";
 import {
   toMarkdown, toMarkdownBody, toHtml, toMdx, toJson,
-  toNewsletterMarkdown, toNewsletterHtml,
   mdToHtml, downloadFile, copyToClipboard, buildLlmPrompt, toContentSegments
 } from "@/lib/exports";
 import { parseChartBlock } from "@/lib/chart";
 import { ChartBlockView } from "@/components/ChartBlockView";
 import { generateSocial, generateYoutube } from "@/lib/api";
 import { getStyleInstructions } from "@/lib/styles";
-import { articleSlug, charCount, seoTitle, slugify, META_DESCRIPTION_MAX, META_DESCRIPTION_MIN, SEO_TITLE_MAX } from "@/lib/seo";
+import { addDraftToNewsletter } from "@/lib/newsletter";
+import { articleSlug, articleUrl, charCount, seoTitle, slugify, META_DESCRIPTION_MAX, META_DESCRIPTION_MIN, SEO_TITLE_MAX } from "@/lib/seo";
 
 export default function Finalize() {
   const { id } = useParams();
@@ -63,7 +63,14 @@ export default function Finalize() {
   const titleLen = charCount(seoTitle(draft));
   const metaLen = charCount(draft.brief.metaDescription);
 
-  const publishedUrl = `/blog/${slug}`;
+  const publishedUrl = articleUrl(draft);
+
+  const onAddToNewsletter = () => {
+    const added = addDraftToNewsletter(draft);
+    toast[added ? "success" : "info"](added ? "Added to your newsletter" : "Already in your newsletter", {
+      action: { label: "Open newsletter", onClick: () => navigate("/newsletter") },
+    });
+  };
 
   const exports = {
     html:       { label: "HTML",         ext: "html", mime: "text/html",        content: () => toHtml(draft) },
@@ -72,8 +79,6 @@ export default function Finalize() {
     json:       { label: "Structured JSON", ext: "json", mime: "application/json", content: () => toJson(draft) },
     youtube:    { label: "YouTube Script",  ext: "txt",  mime: "text/plain",      content: () => youtube || "Click 'Generate' to draft a YouTube Shorts script." },
     social:     { label: "Social Snippets", ext: "json", mime: "application/json", content: () => JSON.stringify(social ?? {}, null, 2) },
-    newsletter: { label: "Email Newsletter (HTML)", ext: "html", mime: "text/html", content: () => toNewsletterHtml(draft) },
-    "newsletter-md": { label: "Email Newsletter (MD)", ext: "md", mime: "text/markdown", content: () => toNewsletterMarkdown(draft) },
     prompt:     { label: "Full LLM Prompt Used", ext: "txt", mime: "text/plain", content: () => buildLlmPrompt(draft, draft.styleId) },
   };
 
@@ -131,6 +136,9 @@ export default function Finalize() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className="rounded-full">{draft.styleId}</Badge>
+          <Button size="sm" variant="outline" onClick={onAddToNewsletter} data-testid="add-to-newsletter-btn">
+            <Mail className="w-3.5 h-3.5 mr-1.5" /> Add to newsletter
+          </Button>
         </div>
       </div>
 
@@ -140,9 +148,13 @@ export default function Finalize() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">Published URL</div>
-              <div className="font-mono text-sm break-all">{publishedUrl}</div>
+              {publishedUrl
+                ? <div className="font-mono text-sm break-all">{publishedUrl}</div>
+                : <div className="text-sm text-muted-foreground">
+                    Not set. Add your site's <Link to="/settings" className="underline">Article URL in Settings</Link>, or a Canonical URL on this article.
+                  </div>}
             </div>
-            <Button
+            {publishedUrl && <Button
               size="sm"
               variant="outline"
               onClick={() => {
@@ -152,7 +164,7 @@ export default function Finalize() {
               data-testid="copy-published-url-btn"
             >
               <Copy className="w-3.5 h-3.5 mr-1.5" /> Copy URL
-            </Button>
+            </Button>}
           </div>
           <div className="mt-2 text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1" data-testid="finalize-seo-summary">
             <span>Slug: <span className="font-mono">{slug}</span></span>

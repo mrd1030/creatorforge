@@ -16,6 +16,9 @@ export interface AppSettings {
   defaultAffiliateEnabled: boolean;
   defaultNiche: string;
   authorName: string;
+  // Where published articles live, e.g. "https://yourblog.com/blog/{slug}". Used for
+  // newsletter links and the published URL. Empty means no links are generated.
+  articleUrlPattern?: string;
 }
 
 export type BlockType =
@@ -95,14 +98,6 @@ export interface NewsletterPreview {
   sourceDraftId?: string;
 }
 
-export interface Newsletter {
-  headerImage: HeaderImage;
-  introText: string;
-  outroText: string;
-  previews: NewsletterPreview[];
-  useArticleHeader: boolean;
-}
-
 export interface Version {
   id: string;
   ts: number;
@@ -119,7 +114,6 @@ export interface Draft {
   blocks: Block[];
   headerImage: HeaderImage;
   affiliate: AffiliateConfig;
-  newsletter: Newsletter;
   versions: Version[];
   llmPrompt?: string;
 }
