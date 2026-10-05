@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { loadNewsletter, saveNewsletter, loadDrafts, uid } from "@/lib/storage";
 import { generateImagePrompt, sendEmail } from "@/lib/api";
 import { APP_NAME } from "@/lib/branding";
+import { isHidden, useDemo } from "@/lib/demo";
 import {
   standaloneNewsletterHtml, standaloneNewsletterMarkdown, newsletterPlainText,
   copyToClipboard, downloadFile,
@@ -39,6 +40,7 @@ function draftToPreview(d: Draft): NewsletterPreview {
 }
 
 export default function Newsletter() {
+  const demo = useDemo();
   const [nl, setNl] = useState<StandaloneNewsletter>(loadNewsletter());
   const [editId, setEditId] = useState<string | null>(null); // "featured" or preview id
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -274,7 +276,7 @@ export default function Newsletter() {
                   </TabsContent>
                 ))}
               </Tabs>
-              <div className="mt-4 pt-4 border-t border-border">
+              {!isHidden(demo, "email") && <div className="mt-4 pt-4 border-t border-border">
                 <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2 flex items-center gap-1.5">
                   <Send className="w-3.5 h-3.5" /> Send a test email
                 </div>
@@ -287,7 +289,7 @@ export default function Newsletter() {
                   </Button>
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-1.5">Sends the HTML version to your inbox to preview before publishing.</p>
-              </div>
+              </div>}
             </CardContent></Card>
           </div>
         </div>

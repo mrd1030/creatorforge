@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { loadDrafts, deleteDraft } from "@/lib/storage";
+import { useDemo } from "@/lib/demo";
 import { getStyleById, getAllStyles } from "@/lib/styles";
 import type { Draft } from "@/types";
 import { toast } from "sonner";
@@ -14,7 +15,10 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [drafts, setDrafts] = useState<Draft[]>([]);
 
-  useEffect(() => { setDrafts(loadDrafts()); }, []);
+  const demo = useDemo();
+
+  // Re-read when demo status arrives: the first demo visit seeds a sample article.
+  useEffect(() => { setDrafts(loadDrafts()); }, [demo.demo]);
 
   const onNew = () => navigate("/new");
 

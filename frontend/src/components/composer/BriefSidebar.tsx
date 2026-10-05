@@ -13,6 +13,7 @@ import { getAllStyles, getStyleInstructions } from "@/lib/styles";
 import { loadCustomCategories, saveCustomCategories, uid } from "@/lib/storage";
 import { generateBrief, generateFacts, generateImagePrompt, generateMeta, generateSeo, processArticle } from "@/lib/api";
 import { Loader2 } from "lucide-react";
+import { isHidden, useDemo } from "@/lib/demo";
 import type { Draft, StyleId, Block } from "@/types";
 
 interface Props {
@@ -47,6 +48,7 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
   const [customCats, setCustomCats] = useState<string[]>(loadCustomCategories());
   const [newCat, setNewCat] = useState("");
   const [newTag, setNewTag] = useState("");
+  const demo = useDemo();
   const [openSection, setOpenSection] = useState<string>("style");
   const [seoBusy, setSeoBusy] = useState(false);
   const [briefBusy, setBriefBusy] = useState(false);
@@ -312,7 +314,7 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
           </div>
         </Sec>
 
-        <Sec open={openSection === "import"} onToggle={() => toggle("import")} k="import" title="Import Existing Article">
+        {!isHidden(demo, "import") && <Sec open={openSection === "import"} onToggle={() => toggle("import")} k="import" title="Import Existing Article">
           <p className="text-xs text-muted-foreground -mt-1">
             Paste a full article and the AI splits it into editable blocks and fills the brief, SEO fields, tags, and categories for you. Replaces the current blocks.
           </p>
@@ -335,7 +337,7 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
               ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Processing…</>
               : <><Sparkles className="w-3.5 h-3.5 mr-1.5" /> Process with AI</>}
           </Button>
-        </Sec>
+        </Sec>}
 
         <Sec open={openSection === "brief"} onToggle={() => toggle("brief")} k="brief" title="Brief & Metadata">
           <div>

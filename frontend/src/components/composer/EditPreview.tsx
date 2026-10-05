@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Sparkles, RefreshCw, Wand2, Loader2, Radio, X } from "lucide-react";
+import { Sparkles, RefreshCw, Wand2, Loader2, Radio, X, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { generateArticle, humanize, streamBlock } from "@/lib/api";
+import { isLocked, showLocked, useDemo } from "@/lib/demo";
 import { buildLlmPrompt } from "@/lib/exports";
 import { uid } from "@/lib/storage";
 import { getStyleInstructions } from "@/lib/styles";
@@ -18,6 +19,9 @@ interface Props {
 
 export default function EditPreview({ draft, setDraft }: Props) {
   const nc = NICHE_COLORS[draft.brief.niche] || NICHE_COLORS["Pet Care"];
+  const demo = useDemo();
+  const streamLocked = isLocked(demo, "stream_all");
+  const polishAllLocked = isLocked(demo, "polish_all");
   const [busy, setBusy] = useState(false);
   const [blockBusy, setBlockBusy] = useState<string>("");
   const abortRef = useRef<AbortController | null>(null);
@@ -81,6 +85,9 @@ const updateBlock = (id: string, patch: Partial<Block>) => {
         }
       }
 
+      if (demo.demo && blocks.length > demo.maxArticleBlocks) {
+        throw new Error(`The demo writes up to ${demo.maxArticleBlocks} blocks per article. Remove a few blocks, or get the full template for longer pieces.`);
+      }
       const r = await generateArticle({
         styleId: draft.styleId,
         styleInstructions: getStyleInstructions(draft.styleId),
@@ -244,11 +251,11 @@ const updateBlock = (id: string, patch: Partial<Block>) => {
             {busy ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1.5" />}
             Generate Article Content
           </Button>
-          <Button onClick={onStreamAll} disabled={busy} size="sm" variant="outline" data-testid="stream-all-btn">
-            <Radio className="w-4 h-4 mr-1.5" /> Generate (live stream)
+          <Button onClick={streamLocked ? () => showLocked("stream_all") : onStreamAll} disabled={busy} size="sm" variant="outline" data-testid="stream-all-btn">
+            {streamLocked ? <Lock className="w-4 h-4 mr-1.5" /> : <Radio className="w-4 h-4 mr-1.5" />} Generate (live stream)
           </Button>
-          <Button onClick={onHumanizeAll} disabled={busy} size="sm" variant="outline" data-testid="polish-all-btn">
-            <Wand2 className="w-4 h-4 mr-1.5" /> Polish Entire Article
+          <Button onClick={polishAllLocked ? () => showLocked("polish_all") : onHumanizeAll} disabled={busy} size="sm" variant="outline" data-testid="polish-all-btn">
+            {polishAllLocked ? <Lock className="w-4 h-4 mr-1.5" /> : <Wand2 className="w-4 h-4 mr-1.5" />} Polish Entire Article
           </Button>
           {busy && (
             <Button onClick={cancelStream} size="sm" variant="ghost" className="text-destructive" data-testid="cancel-stream-btn">

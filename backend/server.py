@@ -1077,6 +1077,13 @@ async def send_email(request: EmailRequest):
 # Mount router
 app.include_router(api_router)
 
+# Public demo restrictions (demo branch only; see demo.py). Added first so it runs inside the
+# rate limiter and CORS.
+if os.environ.get('DEMO_MODE', '').lower() in ('1', 'true', 'yes'):
+    import demo
+    MAX_ARTICLE_BLOCKS = min(MAX_ARTICLE_BLOCKS, demo.MAX_ARTICLE_BLOCKS)
+    app.add_middleware(demo.DemoMiddleware, client_ip=RateLimitMiddleware._client_ip)
+
 # Rate limiting must be added before CORS so CORS ends up as the outermost layer —
 # otherwise a 429 response short-circuited by the rate limiter would skip CORS
 # entirely and the browser would report it as a network error instead of a 429.

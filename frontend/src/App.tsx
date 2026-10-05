@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
+import DemoBanner from "@/components/DemoBanner";
 import Starfield from "@/components/Starfield";
 import Dashboard from "@/pages/Dashboard";
 import Composer from "@/pages/Composer";
@@ -16,6 +17,7 @@ export default function App() {
       <div className="relative min-h-screen flex flex-col light-grain">
         <Starfield />
         <Navbar />
+        <DemoBanner />
         <main className="relative z-10 flex-1">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

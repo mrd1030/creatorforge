@@ -1,4 +1,5 @@
 import axios from "axios";
+import { refreshDemo } from "@/lib/demo";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
@@ -23,6 +24,12 @@ client.interceptors.response.use(undefined, (error) => {
   if (msg) error.message = msg;
   return Promise.reject(error);
 });
+
+// Demo branch: keep the demo allowance banner current after each call.
+client.interceptors.response.use(
+  (resp) => { refreshDemo(); return resp; },
+  (error) => { refreshDemo(); return Promise.reject(error); },
+);
 
 export async function generateBlock(payload: any): Promise<{ text: string }> {
   const { data } = await client.post("/generate/block", payload);
@@ -116,6 +123,18 @@ export async function sendEmail(payload: { recipient_email: string; subject: str
 
 // Token-by-token streaming for a single block via SSE.
 export async function streamBlock(
+  payload: any,
+  onDelta: (text: string) => void,
+  signal?: AbortSignal
+): Promise<void> {
+  try {
+    await readBlockStream(payload, onDelta, signal);
+  } finally {
+    refreshDemo();
+  }
+}
+
+async function readBlockStream(
   payload: any,
   onDelta: (text: string) => void,
   signal?: AbortSignal

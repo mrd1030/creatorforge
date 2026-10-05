@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { loadDrafts, deleteDraft } from "@/lib/storage";
+import { useDemo } from "@/lib/demo";
 import { getStyleById } from "@/lib/styles";
 import type { Draft } from "@/types";
 import { toast } from "sonner";
@@ -15,7 +16,10 @@ export default function Drafts() {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [q, setQ] = useState("");
 
-  useEffect(() => { setDrafts(loadDrafts()); }, []);
+  const demo = useDemo();
+
+  // Re-read when demo status arrives: the first demo visit seeds a sample article.
+  useEffect(() => { setDrafts(loadDrafts()); }, [demo.demo]);
 
   const onNew = () => navigate("/new");
   const onDelete = (id: string) => {
