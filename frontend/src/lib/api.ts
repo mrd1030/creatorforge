@@ -51,7 +51,7 @@ export async function generateMeta(title: string, content: string, focusKeyword:
   return data;
 }
 
-export async function generateSeo(payload: { title?: string; topic?: string; content?: string; focusKeyword?: string; niche?: string }): Promise<{ focusKeyword: string; metaDescription: string }> {
+export async function generateSeo(payload: { title?: string; topic?: string; content?: string; focusKeyword?: string; niche?: string }): Promise<{ focusKeyword: string; seoTitle: string; metaDescription: string }> {
   const { data } = await client.post("/generate/seo", payload);
   return data;
 }

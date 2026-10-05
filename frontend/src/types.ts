@@ -62,6 +62,10 @@ export interface Brief {
   tags: string[];
   slug: string;
   canonicalUrl: string;
+  // Search result title; falls back to the article title when empty.
+  seoTitle?: string;
+  // Ask search engines not to index this article.
+  noIndex?: boolean;
   // Content niche (Pet Care, Finance, Travel, ...) — drives the category list and
   // is sent to the backend so generation prompts know what they're writing for.
   niche: string;

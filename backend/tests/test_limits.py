@@ -111,3 +111,27 @@ def test_prompts_are_topic_neutral():
         assert not pet_words.search(system), (style_id, pet_words.search(system).group(0))
     for text in server.BLOCK_INSTRUCTIONS.values():
         assert not pet_words.search(text)
+
+
+def test_fit_trims_at_word_boundary_without_dangling_words():
+    long_title = "How to Start a Simple Monthly Budget That Actually Works for Busy People"
+    fitted = server._fit(long_title, server.SEO_TITLE_MAX)
+    assert len(fitted) <= server.SEO_TITLE_MAX
+    assert fitted == "How to Start a Simple Monthly Budget That Actually Works"
+    assert server._fit('  "Already short"  ', 60) == "Already short"
+
+
+def test_seo_route_enforces_lengths(monkeypatch):
+    async def wordy_llm(system, user_text, max_tokens=2000):
+        return json.dumps({
+            "focusKeyword": "monthly budget",
+            "seoTitle": "Monthly Budget Basics: " + "a really long title " * 5,
+            "metaDescription": "A monthly budget guide " * 12,
+        })
+
+    monkeypatch.setattr(server, "llm_complete", wordy_llm)
+    r = client_for_new_ip().post("/api/generate/seo", json={"title": "Budgeting"})
+    body = r.json()
+    assert len(body["seoTitle"]) <= server.SEO_TITLE_MAX
+    assert len(body["metaDescription"]) <= server.META_DESCRIPTION_MAX
+    assert not body["metaDescription"].endswith(" ")

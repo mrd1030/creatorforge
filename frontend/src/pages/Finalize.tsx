@@ -21,6 +21,7 @@ import { ChartBlockView } from "@/components/ChartBlockView";
 import { generateSocial, generateYoutube } from "@/lib/api";
 import { pushToSanity, loadSanityToken, isSanityConfigured, getSanityStudioUrl } from "@/lib/sanity";
 import { getStyleInstructions } from "@/lib/styles";
+import { articleSlug, charCount, seoTitle, slugify, META_DESCRIPTION_MAX, META_DESCRIPTION_MIN, SEO_TITLE_MAX } from "@/lib/seo";
 
 export default function Finalize() {
   const { id } = useParams();
@@ -61,12 +62,9 @@ export default function Finalize() {
 
   const title = draft.blocks.find(b => b.type === "title")?.content || draft.brief.topic || "Untitled article";
 
-  // Generate slug and published URL
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 70);
+  const slug = articleSlug(draft);
+  const titleLen = charCount(seoTitle(draft));
+  const metaLen = charCount(draft.brief.metaDescription);
 
   const publishedUrl = `/blog/${slug}`;
 
@@ -90,8 +88,7 @@ export default function Finalize() {
 
   const handleDownload = (key: string) => {
     const e = (exports as any)[key];
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60);
-    downloadFile(`${slug}.${e.ext}`, e.content(), e.mime);
+    downloadFile(`${slugify(title) || "article"}.${e.ext}`, e.content(), e.mime);
   };
 
   const onGenerateSocial = async () => {
@@ -198,8 +195,15 @@ export default function Finalize() {
               <Copy className="w-3.5 h-3.5 mr-1.5" /> Copy URL
             </Button>
           </div>
-          <div className="mt-2 text-xs text-muted-foreground">
-            Slug: <span className="font-mono">{slug}</span>
+          <div className="mt-2 text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1" data-testid="finalize-seo-summary">
+            <span>Slug: <span className="font-mono">{slug}</span></span>
+            <span className={titleLen > SEO_TITLE_MAX ? "text-destructive" : ""}>SEO title: {titleLen}/{SEO_TITLE_MAX}</span>
+            <span className={metaLen > META_DESCRIPTION_MAX ? "text-destructive" : metaLen < META_DESCRIPTION_MIN ? "text-amber-600 dark:text-amber-400" : ""}>
+              Meta description: {metaLen}/{META_DESCRIPTION_MAX}
+            </span>
+            <span className={draft.brief.noIndex ? "text-amber-600 dark:text-amber-400" : ""}>
+              Search engines: {draft.brief.noIndex ? "hidden (noindex)" : "indexed"}
+            </span>
           </div>
         </CardContent>
       </Card>

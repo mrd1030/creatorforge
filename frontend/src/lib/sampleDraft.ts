@@ -24,6 +24,8 @@ export function sampleDraft(): Draft {
     categories: ["Meal Prep", "Quick Meals", "Dinner"],
     tags: ["meal-prep", "weeknight-dinners", "batch-cooking", "healthy-eating"],
     slug: "simple-sunday-meal-prep",
+    seoTitle: "Simple Sunday Meal Prep for Easy Weeknight Dinners",
+    noIndex: false,
   };
   d.headerImage = {
     prompt: "Overhead shot of a bright kitchen counter with glass meal prep containers filled with roasted vegetables, grains, grilled chicken and colorful sauces, fresh herbs and a wooden cutting board, soft natural window light, clean and inviting, 35mm lens",

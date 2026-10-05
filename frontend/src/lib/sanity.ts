@@ -1,4 +1,5 @@
 import type { Draft } from "@/types";
+import { articleSlug, articleTitle, seoTitle } from "@/lib/seo";
 
 // Which Sanity project/dataset this deployment pushes to — set per-deployment via
 // env vars rather than hardcoded, so different buyers of this template can point it
@@ -29,10 +30,6 @@ function fallbackSiteUrl(): string {
 
 function uid(): string {
   return Math.random().toString(36).slice(2, 10);
-}
-
-function toSlug(title: string): string {
-  return title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
 }
 
 // Parse inline markdown marks (**bold**, *italic*) into Portable Text spans.
@@ -186,9 +183,8 @@ function parseSourcesContent(content: string): any {
 // ── main converter ─────────────────────────────────────────────────────────────
 
 export function draftToSanityDoc(draft: Draft): any {
-  const titleBlock = draft.blocks.find(b => b.type === "title");
-  const title = titleBlock?.content?.trim() || draft.brief.topic || "Untitled";
-  const slug = draft.brief.slug || toSlug(title);
+  const title = articleTitle(draft);
+  const slug = articleSlug(draft);
 
   const body: any[] = [];
 
@@ -224,7 +220,7 @@ export function draftToSanityDoc(draft: Draft): any {
     title,
     slug: { _type: "slug", current: slug },
     excerpt: draft.brief.metaDescription || "",
-    seoTitle: title,
+    seoTitle: seoTitle(draft),
     seoDescription: draft.brief.metaDescription || "",
     readTime,
     publishedAt: new Date(draft.createdAt).toISOString(),
