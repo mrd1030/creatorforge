@@ -107,6 +107,14 @@ export const STYLE_COLORS: Record<string, { bg: string; border: string; text: st
 
 // Content niches with their own category lists
 export const NICHES: Record<string, { label: string; emoji: string; categories: string[] }> = {
+  "General": {
+    label: "General",
+    emoji: "📝",
+    categories: [
+      "Guides", "How-To", "Opinion", "News", "Reviews",
+      "Interviews", "Resources", "Case Studies", "Site News",
+    ],
+  },
   "Pet Care": {
     label: "Pet Care",
     emoji: "🐾",
@@ -184,6 +192,7 @@ export const NICHES: Record<string, { label: string; emoji: string; categories: 
 export const NICHE_KEYS = Object.keys(NICHES);
 
 export const NICHE_COLORS: Record<string, { border: string; bg: string; text: string; ring: string }> = {
+  "General":          { border: "border-slate-500/60",  bg: "bg-slate-500/8",   text: "text-slate-600 dark:text-slate-400",   ring: "ring-slate-500/30" },
   "Pet Care":         { border: "border-amber-500/60",  bg: "bg-amber-500/8",   text: "text-amber-600 dark:text-amber-400",   ring: "ring-amber-500/30" },
   "Health & Wellness":{ border: "border-emerald-500/60", bg: "bg-emerald-500/8", text: "text-emerald-600 dark:text-emerald-400", ring: "ring-emerald-500/30" },
   "Food & Recipes":   { border: "border-orange-500/60", bg: "bg-orange-500/8",  text: "text-orange-600 dark:text-orange-400",  ring: "ring-orange-500/30" },

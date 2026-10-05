@@ -34,7 +34,7 @@ export default function Settings() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const customCats = loadCustomCategories();
-  const nicheCategories = NICHES[settings.defaultNiche]?.categories || NICHES["Pet Care"].categories;
+  const nicheCategories = NICHES[settings.defaultNiche]?.categories || NICHES["General"].categories;
   const allCats = [...nicheCategories, ...customCats];
 
   const persistSettings = (patch: Partial<AppSettings>) => {
@@ -104,7 +104,7 @@ export default function Settings() {
             <CardContent className="p-10 text-center">
               <Wand2 className="w-9 h-9 mx-auto text-muted-foreground/60 mb-3" />
               <div className="font-display text-lg mb-1">No custom styles yet</div>
-              <p className="text-sm text-muted-foreground mb-5">Create a voice like "Vet-backed & gentle" or "Snarky cat parent".</p>
+              <p className="text-sm text-muted-foreground mb-5">Create a voice like "Calm expert" or "Witty best friend".</p>
               <Button onClick={openNew} variant="outline" data-testid="add-custom-style-empty-btn"><Plus className="w-4 h-4 mr-2" /> Create your first style</Button>
             </CardContent>
           </Card>
@@ -315,7 +315,7 @@ export default function Settings() {
             <div className="space-y-3">
               <div>
                 <Label>Name</Label>
-                <Input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} placeholder="e.g. Snarky Cat Parent" data-testid="style-name-input" />
+                <Input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} placeholder="e.g. Witty Best Friend" data-testid="style-name-input" />
               </div>
               <div>
                 <Label>Tagline</Label>
@@ -328,7 +328,7 @@ export default function Settings() {
               <div>
                 <Label>Writing instructions (AI system prompt)</Label>
                 <Textarea rows={6} value={editing.systemPrompt} onChange={e => setEditing({ ...editing, systemPrompt: e.target.value })}
-                  placeholder="You are a witty but loving cat owner. Write with dry humor, short punchy sentences…"
+                  placeholder="You are a witty, plain-spoken guide. Write with dry humor, short punchy sentences…"
                   data-testid="style-prompt-input" />
                 <p className="text-[11px] text-muted-foreground mt-1">This becomes the voice instructions sent to the AI when this style is selected.</p>
               </div>

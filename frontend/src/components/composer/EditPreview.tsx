@@ -17,7 +17,7 @@ interface Props {
 }
 
 export default function EditPreview({ draft, setDraft }: Props) {
-  const nc = NICHE_COLORS[draft.brief.niche] || NICHE_COLORS["Pet Care"];
+  const nc = NICHE_COLORS[draft.brief.niche] || NICHE_COLORS["General"];
   const [busy, setBusy] = useState(false);
   const [blockBusy, setBlockBusy] = useState<string>("");
   const abortRef = useRef<AbortController | null>(null);

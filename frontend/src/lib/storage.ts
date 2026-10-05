@@ -21,7 +21,7 @@ export function emptyBrief(): Brief {
     keyPoints: "", angle: "", extra: "",
     focusKeyword: "", metaDescription: "", factsToUse: "",
     categories: [], tags: [], slug: "", canonicalUrl: "",
-    niche: "Pet Care",
+    niche: "General",
   };
 }
 
@@ -46,7 +46,7 @@ export function newDraft(styleId?: StyleId): Draft {
   const settings = loadSettings();
   const brief = emptyBrief();
   brief.categories = [...settings.defaultCategories];
-  brief.niche = settings.defaultNiche || "Pet Care";
+  brief.niche = settings.defaultNiche || "General";
   const aff = emptyAffiliate();
   aff.enabled = settings.defaultAffiliateEnabled;
   return {
@@ -134,7 +134,7 @@ export function deleteCustomStyle(id: string) {
 
 // ---- App settings ----
 export function defaultSettings(): AppSettings {
-  return { defaultStyleId: "real-person", defaultCategories: [], defaultAffiliateEnabled: false, defaultNiche: "Pet Care", authorName: "" };
+  return { defaultStyleId: "real-person", defaultCategories: [], defaultAffiliateEnabled: false, defaultNiche: "General", authorName: "" };
 }
 export function loadSettings(): AppSettings {
   try {
