@@ -29,7 +29,7 @@ print(f"[env] Loading from: {_env_path} (exists={_env_path.exists()})")
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', '')
-CLAUDE_MODEL = os.environ.get('CLAUDE_MODEL', 'claude-sonnet-4-6')
+CLAUDE_MODEL = os.environ.get('CLAUDE_MODEL', 'claude-sonnet-5-5')
 TAVILY_API_KEY = os.environ.get('TAVILY_API_KEY', '')
 
 app = FastAPI(title="CreatorForge API")
@@ -49,6 +49,17 @@ logger = logging.getLogger(__name__)
 RATE_LIMIT_GENERAL_PER_MINUTE = 60      # all /api/ traffic, per IP
 RATE_LIMIT_EXPENSIVE_PER_MINUTE = 20    # LLM/email-triggering routes specifically, per IP
 _RATE_LIMIT_WINDOW_SECONDS = 60
+
+# Number of trusted reverse proxies in front of this app (Render = 1 by default). The client IP is
+# taken from X-Forwarded-For counting from the RIGHT, so a caller can't spoof it by sending their
+# own header. Verify on your host by logging the header once; raise this if IPs look like proxies.
+TRUSTED_PROXY_HOPS = int(os.environ.get('TRUSTED_PROXY_HOPS', '1'))
+
+# Public demo mode: caps each IP to a small number of expensive calls per day and disables email
+# sending, so a public demo can't burn your API budget or your email quota.
+DEMO_MODE = os.environ.get('DEMO_MODE', '').lower() in ('1', 'true', 'yes')
+DEMO_DAILY_LIMIT = int(os.environ.get('DEMO_DAILY_LIMIT', '5'))
+_DEMO_WINDOW_SECONDS = 24 * 60 * 60
 _RATE_LIMIT_MAX_TRACKED_KEYS = 50_000   # safety cap so a flood of distinct IPs can't grow this unbounded
 
 _EXPENSIVE_PATH_PREFIXES = ("/api/generate/", "/api/process/", "/api/send-email")
@@ -68,10 +79,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     def _client_ip(request: Request) -> str:
         forwarded = request.headers.get("x-forwarded-for")
         if forwarded:
-            return forwarded.split(",")[0].strip()
+            parts = [p.strip() for p in forwarded.split(",") if p.strip()]
+            if parts:
+                # Count from the right: the rightmost entries were added by trusted proxies.
+                idx = max(len(parts) - TRUSTED_PROXY_HOPS, 0)
+                return parts[idx]
         return request.client.host if request.client else "unknown"
 
-    def _allow(self, key: str, limit: int) -> bool:
+    def _allow(self, key: str, limit: int, window: int = _RATE_LIMIT_WINDOW_SECONDS) -> bool:
         if len(self._hits) > _RATE_LIMIT_MAX_TRACKED_KEYS:
             # Defensive: an attacker spraying requests from many distinct IPs could
             # otherwise grow this dict without bound. A full reset is blunt but safe,
@@ -79,7 +94,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             self._hits.clear()
         now = time.monotonic()
         hits = self._hits[key]
-        while hits and now - hits[0] > _RATE_LIMIT_WINDOW_SECONDS:
+        while hits and now - hits[0] > window:
             hits.popleft()
         if len(hits) >= limit:
             return False
@@ -94,6 +109,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         ip = self._client_ip(request)
         if not self._allow(f"general:{ip}", RATE_LIMIT_GENERAL_PER_MINUTE):
             return JSONResponse({"detail": "Too many requests. Please slow down."}, status_code=429)
+        if DEMO_MODE and path.startswith(_EXPENSIVE_PATH_PREFIXES):
+            if path.startswith("/api/send-email"):
+                return JSONResponse({"detail": "Email sending is disabled in the public demo."}, status_code=403)
+            if not self._allow(f"demo:{ip}", DEMO_DAILY_LIMIT, _DEMO_WINDOW_SECONDS):
+                return JSONResponse(
+                    {"detail": "Demo limit reached for today. Buy CreatorForge to run it with your own key."},
+                    status_code=429,
+                )
         if path.startswith(_EXPENSIVE_PATH_PREFIXES) and not self._allow(f"expensive:{ip}", RATE_LIMIT_EXPENSIVE_PER_MINUTE):
             return JSONResponse(
                 {"detail": "Rate limit exceeded for AI generation. Please wait a minute and try again."},

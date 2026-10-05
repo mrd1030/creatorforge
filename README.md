@@ -39,7 +39,9 @@ Copy `backend/.env.example` to `backend/.env` and fill in:
 | `TAVILY_API_KEY` | For fact search | Powers "Search for facts" in the brief builder. Without it, that feature is disabled but everything else still works. |
 | `RESEND_API_KEY` | For sending email | Needed to send newsletter test/preview emails. |
 | `SENDER_EMAIL` | For sending email | The "from" address used when sending via Resend. |
-| `CLAUDE_MODEL` | No | Overrides the Claude model used (defaults to `claude-sonnet-4-6`). |
+| `CLAUDE_MODEL` | No | Overrides the Claude model used (defaults to `claude-sonnet-5-5`). |
+| `DEMO_MODE` | No | Set `true` for a public demo: limits each IP to `DEMO_DAILY_LIMIT` (default 5) AI calls per day and disables email sending. |
+| `TRUSTED_PROXY_HOPS` | No | Trusted reverse proxies in front of the API (default 1). Used to read the real client IP safely for rate limiting. |
 | `CORS_ORIGINS` | No | Comma-separated allowed origins for the API (defaults to `*`). Set this to your frontend's URL in production. |
 
 The frontend reads these from `frontend/.env`:
