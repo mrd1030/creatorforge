@@ -137,7 +137,7 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
     if (!draft.brief.topic) { toast.error("Add a topic first"); return; }
     const t = toast.loading("Generating header image prompt…");
     try {
-      const r = await generateImagePrompt({ topic: draft.brief.topic, angle: draft.brief.angle, styleId: draft.styleId });
+      const r = await generateImagePrompt({ topic: draft.brief.topic, angle: draft.brief.angle, styleId: draft.styleId, niche });
       updateHeader({ prompt: r.prompt, alt: r.alt });
       toast.success("Header prompt ready", { id: t });
     } catch (e: any) { toast.error("Failed to generate", { id: t, description: e?.message }); }
@@ -148,7 +148,7 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
     if (!title) { toast.error("Add a title or topic first"); return; }
     const t = toast.loading("Generating meta description…");
     try {
-      const r = await generateMeta(title, articleContent(), draft.brief.focusKeyword);
+      const r = await generateMeta(title, articleContent(), draft.brief.focusKeyword, niche);
       updateBrief({ metaDescription: r.text });
       toast.success("Meta description ready", { id: t });
     } catch (e: any) { toast.error("Failed", { id: t, description: e?.message }); }
@@ -160,7 +160,7 @@ export default function BriefSidebar({ draft, setDraft, leftOpen, setLeftOpen, o
     setSeoBusy(true);
     const t = toast.loading("Generating SEO keyword + description…");
     try {
-      const r = await generateSeo({ title, topic: draft.brief.topic, content: articleContent(), focusKeyword: draft.brief.focusKeyword });
+      const r = await generateSeo({ title, topic: draft.brief.topic, content: articleContent(), focusKeyword: draft.brief.focusKeyword, niche });
       updateBrief({ focusKeyword: r.focusKeyword || draft.brief.focusKeyword, metaDescription: r.metaDescription || draft.brief.metaDescription });
       toast.success("SEO fields ready", { id: t });
     } catch (e: any) { toast.error("Failed", { id: t, description: e?.message }); }

@@ -40,29 +40,21 @@ logger = logging.getLogger(__name__)
 
 
 # ============ RATE LIMITING ============
-# This is a bring-your-own-key tool: every /api/generate/*, /api/process/*, and
-# /api/send-email call spends the deployer's own Anthropic/Tavily/Resend budget.
-# With the API wide open, anyone who finds the URL could script requests against it
-# and run up a real bill with zero friction. This is a minimal, dependency-free
-# per-IP limiter — good enough to blunt casual/scripted abuse without requiring a
-# full accounts system. Tune the numbers below to taste.
+# This is a bring-your-own-key tool: every POST under /api/ spends the deployer's own
+# Anthropic/Tavily/Resend budget. With the API wide open, anyone who finds the URL could
+# script requests against it and run up a real bill with zero friction. This is a minimal,
+# dependency-free per-IP limiter — good enough to blunt casual/scripted abuse without
+# requiring a full accounts system. Tune the numbers below to taste.
 RATE_LIMIT_GENERAL_PER_MINUTE = 60      # all /api/ traffic, per IP
-RATE_LIMIT_EXPENSIVE_PER_MINUTE = 20    # LLM/email-triggering routes specifically, per IP
+RATE_LIMIT_EXPENSIVE_PER_MINUTE = 20    # POST routes (LLM, search, email), per IP
 _RATE_LIMIT_WINDOW_SECONDS = 60
-
-# Number of trusted reverse proxies in front of this app (Render = 1 by default). The client IP is
-# taken from X-Forwarded-For counting from the RIGHT, so a caller can't spoof it by sending their
-# own header. Verify on your host by logging the header once; raise this if IPs look like proxies.
-TRUSTED_PROXY_HOPS = int(os.environ.get('TRUSTED_PROXY_HOPS', '1'))
-
-# Public demo mode: caps each IP to a small number of expensive calls per day and disables email
-# sending, so a public demo can't burn your API budget or your email quota.
-DEMO_MODE = os.environ.get('DEMO_MODE', '').lower() in ('1', 'true', 'yes')
-DEMO_DAILY_LIMIT = int(os.environ.get('DEMO_DAILY_LIMIT', '5'))
-_DEMO_WINDOW_SECONDS = 24 * 60 * 60
 _RATE_LIMIT_MAX_TRACKED_KEYS = 50_000   # safety cap so a flood of distinct IPs can't grow this unbounded
 
-_EXPENSIVE_PATH_PREFIXES = ("/api/generate/", "/api/process/", "/api/send-email")
+# Number of trusted reverse proxies in front of this app (Render = 1). The client IP is taken
+# from X-Forwarded-For counting from the RIGHT, so a caller can't spoof it by sending their own
+# header. Set 0 when nothing sits in front of the app (the header is then ignored). Verify on
+# your host by logging the header once; raise this if the IPs you see belong to proxies.
+TRUSTED_PROXY_HOPS = max(int(os.environ.get('TRUSTED_PROXY_HOPS', '1')), 0)
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -78,15 +70,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     @staticmethod
     def _client_ip(request: Request) -> str:
         forwarded = request.headers.get("x-forwarded-for")
-        if forwarded:
+        if forwarded and TRUSTED_PROXY_HOPS > 0:
             parts = [p.strip() for p in forwarded.split(",") if p.strip()]
             if parts:
                 # Count from the right: the rightmost entries were added by trusted proxies.
-                idx = max(len(parts) - TRUSTED_PROXY_HOPS, 0)
-                return parts[idx]
+                return parts[max(len(parts) - TRUSTED_PROXY_HOPS, 0)]
         return request.client.host if request.client else "unknown"
 
-    def _allow(self, key: str, limit: int, window: int = _RATE_LIMIT_WINDOW_SECONDS) -> bool:
+    def _allow(self, key: str, limit: int) -> bool:
         if len(self._hits) > _RATE_LIMIT_MAX_TRACKED_KEYS:
             # Defensive: an attacker spraying requests from many distinct IPs could
             # otherwise grow this dict without bound. A full reset is blunt but safe,
@@ -94,7 +85,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             self._hits.clear()
         now = time.monotonic()
         hits = self._hits[key]
-        while hits and now - hits[0] > window:
+        while hits and now - hits[0] > _RATE_LIMIT_WINDOW_SECONDS:
             hits.popleft()
         if len(hits) >= limit:
             return False
@@ -109,15 +100,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         ip = self._client_ip(request)
         if not self._allow(f"general:{ip}", RATE_LIMIT_GENERAL_PER_MINUTE):
             return JSONResponse({"detail": "Too many requests. Please slow down."}, status_code=429)
-        if DEMO_MODE and path.startswith(_EXPENSIVE_PATH_PREFIXES):
-            if path.startswith("/api/send-email"):
-                return JSONResponse({"detail": "Email sending is disabled in the public demo."}, status_code=403)
-            if not self._allow(f"demo:{ip}", DEMO_DAILY_LIMIT, _DEMO_WINDOW_SECONDS):
-                return JSONResponse(
-                    {"detail": "Demo limit reached for today. Buy CreatorForge to run it with your own key."},
-                    status_code=429,
-                )
-        if path.startswith(_EXPENSIVE_PATH_PREFIXES) and not self._allow(f"expensive:{ip}", RATE_LIMIT_EXPENSIVE_PER_MINUTE):
+        if request.method == "POST" and not self._allow(f"expensive:{ip}", RATE_LIMIT_EXPENSIVE_PER_MINUTE):
             return JSONResponse(
                 {"detail": "Rate limit exceeded for AI generation. Please wait a minute and try again."},
                 status_code=429,
@@ -338,100 +321,131 @@ async def llm_complete(system: str, user_text: str, max_tokens: int = 2000) -> s
 
 
 # ============ MODELS ============
+# Input size caps. Every text field is sent to Claude, so an unbounded field lets one request
+# cost as much as the model's whole context window. These limits sit well above anything the UI
+# produces; raise them if you write unusually long pieces.
+_SHORT = 500          # titles, topics, keywords, ids
+_MEDIUM = 5_000       # notes, angles, key points
+_LONG = 20_000        # facts to use, a single block's text, custom style instructions
+_ARTICLE = 100_000    # a whole article's text
+_MAX_LIST_ITEMS = 50  # categories, tags
+
+# Most blocks one "Generate article" call accepts. One call writes every block, so this bounds
+# its cost. Override with the MAX_ARTICLE_BLOCKS env var.
+MAX_ARTICLE_BLOCKS = int(os.environ.get('MAX_ARTICLE_BLOCKS', '40'))
+
+
 class BriefIn(BaseModel):
-    topic: str = ""
-    audience: str = ""
-    length: str = ""
-    keyPoints: str = ""
-    angle: str = ""
-    extra: str = ""
-    focusKeyword: str = ""
-    factsToUse: str = ""
-    categories: List[str] = []
-    tags: List[str] = []
-    niche: str = ""
+    topic: str = Field("", max_length=_SHORT)
+    audience: str = Field("", max_length=_MEDIUM)
+    length: str = Field("", max_length=_SHORT)
+    keyPoints: str = Field("", max_length=_MEDIUM)
+    angle: str = Field("", max_length=_MEDIUM)
+    extra: str = Field("", max_length=_MEDIUM)
+    focusKeyword: str = Field("", max_length=_SHORT)
+    factsToUse: str = Field("", max_length=_LONG)
+    categories: List[str] = Field([], max_length=_MAX_LIST_ITEMS)
+    tags: List[str] = Field([], max_length=_MAX_LIST_ITEMS)
+    niche: str = Field("", max_length=_SHORT)
 
 
 class GenerateBlockIn(BaseModel):
-    styleId: str = "real-person"
+    styleId: str = Field("real-person", max_length=_SHORT)
     brief: BriefIn
-    blockType: str
-    blockNote: Optional[str] = ""
-    targetLength: Optional[str] = "medium"
-    styleInstructions: Optional[str] = ""
-    priorContent: Optional[str] = ""  # story/article written so far — used to continue narrative
+    blockType: str = Field(..., max_length=_SHORT)
+    blockNote: Optional[str] = Field("", max_length=_MEDIUM)
+    targetLength: Optional[str] = Field("medium", max_length=_SHORT)
+    styleInstructions: Optional[str] = Field("", max_length=_LONG)
+    # story/article written so far — used to continue narrative (trimmed to its tail before use)
+    priorContent: Optional[str] = Field("", max_length=_ARTICLE)
+
+
+class ArticleBlockIn(BaseModel):
+    id: str = Field(..., max_length=_SHORT)
+    type: str = Field(..., max_length=_SHORT)
+    note: Optional[str] = Field("", max_length=_MEDIUM)
+
+
+class GenerateArticleIn(BaseModel):
+    styleId: str = Field("real-person", max_length=_SHORT)
+    brief: BriefIn = BriefIn()
+    blocks: List[ArticleBlockIn] = []
+    styleInstructions: Optional[str] = Field("", max_length=_LONG)
 
 
 class HumanizeIn(BaseModel):
-    text: str
-    styleId: str = "real-person"
-    styleInstructions: Optional[str] = ""
+    text: str = Field(..., max_length=_LONG)
+    styleId: str = Field("real-person", max_length=_SHORT)
+    styleInstructions: Optional[str] = Field("", max_length=_LONG)
 
 
 class SeoIn(BaseModel):
-    title: str = ""
-    topic: str = ""
-    content: str = ""
-    focusKeyword: Optional[str] = ""
+    title: str = Field("", max_length=_SHORT)
+    topic: str = Field("", max_length=_SHORT)
+    content: str = Field("", max_length=_ARTICLE)
+    focusKeyword: Optional[str] = Field("", max_length=_SHORT)
+    niche: Optional[str] = Field("", max_length=_SHORT)
 
 
 class EmailRequest(BaseModel):
     recipient_email: EmailStr
-    subject: str
-    html_content: str
+    subject: str = Field(..., max_length=_SHORT)
+    html_content: str = Field(..., max_length=500_000)
 
 
 class MetaIn(BaseModel):
-    title: str
-    content: str
-    focusKeyword: Optional[str] = ""
+    title: str = Field(..., max_length=_SHORT)
+    content: str = Field(..., max_length=_ARTICLE)
+    focusKeyword: Optional[str] = Field("", max_length=_SHORT)
+    niche: Optional[str] = Field("", max_length=_SHORT)
 
 
 class ImagePromptIn(BaseModel):
-    topic: str
-    angle: Optional[str] = ""
-    styleId: str = "real-person"
-    blockNote: Optional[str] = ""
+    topic: str = Field(..., max_length=_SHORT)
+    angle: Optional[str] = Field("", max_length=_MEDIUM)
+    styleId: str = Field("real-person", max_length=_SHORT)
+    blockNote: Optional[str] = Field("", max_length=_MEDIUM)
+    niche: Optional[str] = Field("", max_length=_SHORT)
 
 
 class NewsletterPreviewIn(BaseModel):
-    title: str
-    metaDescription: str
-    keyPoints: str = ""
-    headerImagePrompt: str = ""
-    styleId: str = "newsletter"
+    title: str = Field(..., max_length=_SHORT)
+    metaDescription: str = Field(..., max_length=_MEDIUM)
+    keyPoints: str = Field("", max_length=_MEDIUM)
+    headerImagePrompt: str = Field("", max_length=_MEDIUM)
+    styleId: str = Field("newsletter", max_length=_SHORT)
 
 
 class SocialSnippetsIn(BaseModel):
-    title: str
-    metaDescription: str
-    content: str
-    styleId: str = "real-person"
-    styleInstructions: Optional[str] = ""
+    title: str = Field(..., max_length=_SHORT)
+    metaDescription: str = Field(..., max_length=_MEDIUM)
+    content: str = Field(..., max_length=_ARTICLE)
+    styleId: str = Field("real-person", max_length=_SHORT)
+    styleInstructions: Optional[str] = Field("", max_length=_LONG)
 
 
 class YoutubeScriptIn(BaseModel):
-    title: str
-    content: str
-    styleId: str = "storyteller"
-    styleInstructions: Optional[str] = ""
+    title: str = Field(..., max_length=_SHORT)
+    content: str = Field(..., max_length=_ARTICLE)
+    styleId: str = Field("storyteller", max_length=_SHORT)
+    styleInstructions: Optional[str] = Field("", max_length=_LONG)
 
 
 class LayoutSuggestIn(BaseModel):
     brief: BriefIn
-    styleId: str = "real-person"
+    styleId: str = Field("real-person", max_length=_SHORT)
 
 
 class BriefGenerateIn(BaseModel):
-    topic: str
-    styleId: str = "real-person"
-    niche: str = "General"
+    topic: str = Field(..., max_length=_SHORT)
+    styleId: str = Field("real-person", max_length=_SHORT)
+    niche: str = Field("General", max_length=_SHORT)
 
 
 class ProcessArticleIn(BaseModel):
-    text: str
-    styleId: str = "real-person"
-    niche: str = "General"
+    text: str = Field(..., max_length=_ARTICLE)
+    styleId: str = Field("real-person", max_length=_SHORT)
+    niche: str = Field("General", max_length=_SHORT)
 
 
 # ============ ROUTES ============
@@ -587,17 +601,18 @@ async def generate_block_stream(body: GenerateBlockIn):
 
 
 @api_router.post("/generate/article")
-async def generate_article(body: dict):
+async def generate_article(body: GenerateArticleIn):
     """Generate content for an ordered list of blocks in one shot.
     body: { styleId, brief, blocks: [{id, type, note}] }
     Returns: { results: { blockId: text } }
     """
-    style_id = body.get("styleId", "real-person")
-    brief = body.get("brief", {})
-    blocks = body.get("blocks", [])
-    if not blocks:
+    if not body.blocks:
         raise HTTPException(400, "No blocks provided")
-    system = build_system_prompt(style_id, brief, body.get("styleInstructions"))
+    if len(body.blocks) > MAX_ARTICLE_BLOCKS:
+        raise HTTPException(400, f"Too many blocks: {len(body.blocks)} (max {MAX_ARTICLE_BLOCKS} per article).")
+    brief = body.brief.model_dump()
+    blocks = [b.model_dump() for b in body.blocks]
+    system = build_system_prompt(body.styleId, brief, body.styleInstructions)
 
     plan_lines = []
     for i, b in enumerate(blocks, 1):
@@ -729,10 +744,16 @@ async def humanize(body: HumanizeIn):
     return {"text": text.strip()}
 
 
+def _in_niche(niche: Optional[str]) -> str:
+    """' in the X niche' for prompts, or '' when no specific niche was chosen."""
+    n = (niche or "").strip()
+    return "" if not n or n.lower() == "general" else f" in the {n} niche"
+
+
 @api_router.post("/generate/seo")
 async def generate_seo(body: SeoIn):
     system = (
-        "You are an SEO assistant for warm, authentic pet-care articles. "
+        f"You are an SEO assistant for warm, authentic articles{_in_niche(body.niche)}. "
         "Output STRICT JSON (no code fences, no preamble) with exactly these keys: "
         "focusKeyword (a 2-4 word primary search keyword phrase, lowercase), "
         "metaDescription (a warm, specific description between 150 and 160 characters that naturally includes the focus keyword). "
@@ -764,7 +785,7 @@ async def generate_seo(body: SeoIn):
 @api_router.post("/generate/meta")
 async def generate_meta(body: MetaIn):
     system = (
-        "You write SEO meta descriptions for pet-care articles. "
+        f"You write SEO meta descriptions for articles{_in_niche(body.niche)}. "
         "Output a single meta description between 150 and 160 characters. "
         "Warm, specific, includes the focus keyword naturally if provided. "
         "No quotes. No preamble. Just the description."
@@ -778,7 +799,7 @@ async def generate_meta(body: MetaIn):
 @api_router.post("/generate/image-prompt")
 async def generate_image_prompt(body: ImagePromptIn):
     system = (
-        "You craft rich, vivid image-generation prompts for pet-care article header images. "
+        f"You craft rich, vivid image-generation prompts for the header images of articles{_in_niche(body.niche)}. "
         "Output ONE detailed prompt (60-90 words) describing scene, subject, lighting, mood, "
         "composition, lens, and style. Then on a new line output: ALT: <alt text 8-14 words>. "
         "No other commentary."
@@ -867,7 +888,7 @@ async def generate_youtube(body: YoutubeScriptIn):
 @api_router.post("/layout/suggest")
 async def suggest_layout(body: LayoutSuggestIn):
     system = (
-        "You suggest an article block layout for pet-care content. "
+        f"You suggest an article block layout for content{_in_niche(body.brief.niche)}. "
         "Output strict JSON: { blocks: [ { type, note } ] }. Types must be from: "
         "title, prologue, paragraph, tips, pros-cons, key-facts, image, table, chart, "
         "cta, conclusion, custom, resources, references, affiliate. "

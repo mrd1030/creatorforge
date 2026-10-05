@@ -134,7 +134,7 @@ const updateBlock = (id: string, patch: Partial<Block>) => {
   const onBlockImagePrompt = async (b: Block) => {
     const t = toast.loading("Crafting image prompt…");
     try {
-      const r = await generateImagePrompt({ topic: draft.brief.topic, angle: draft.brief.angle, styleId: draft.styleId, blockNote: b.note });
+      const r = await generateImagePrompt({ topic: draft.brief.topic, angle: draft.brief.angle, styleId: draft.styleId, blockNote: b.note, niche: draft.brief.niche });
       updateBlock(b.id, { imagePrompt: r.prompt, imageAlt: r.alt });
       toast.success("Image prompt ready", { id: t });
     } catch (e: any) { toast.error("Failed", { id: t, description: e?.message }); }

@@ -23,9 +23,10 @@ sourced-fact web search, and Resend for sending newsletter emails. There is no d
 [Known limitations](#known-limitations).
 
 Since this is a bring-your-own-key tool, every generation/email call spends *your* API budget.
-The backend has a basic per-IP rate limiter on `/api/generate/*`, `/api/process/*`, and
-`/api/send-email` (in-memory, no extra infra) to blunt casual abuse if the URL leaks — tune the
-`RATE_LIMIT_*` constants near the top of `backend/server.py` to taste. It resets on restart and
+The backend has a basic per-IP rate limiter on every `POST` under `/api/` (each one spends AI,
+search, or email budget) and caps the size of every text field it sends to Claude (in-memory, no
+extra infra) to blunt casual abuse if the URL leaks — tune the `RATE_LIMIT_*` constants and the
+input caps near the top of `backend/server.py` to taste. It resets on restart and
 won't hold up under multiple backend instances behind a load balancer; treat it as a basic
 deterrent, not a substitute for real auth if you need stronger guarantees.
 
@@ -40,8 +41,8 @@ Copy `backend/.env.example` to `backend/.env` and fill in:
 | `RESEND_API_KEY` | For sending email | Needed to send newsletter test/preview emails. |
 | `SENDER_EMAIL` | For sending email | The "from" address used when sending via Resend. |
 | `CLAUDE_MODEL` | No | Overrides the Claude model used (defaults to `claude-sonnet-5-5`). |
-| `DEMO_MODE` | No | Set `true` for a public demo: limits each IP to `DEMO_DAILY_LIMIT` (default 5) AI calls per day and disables email sending. |
-| `TRUSTED_PROXY_HOPS` | No | Trusted reverse proxies in front of the API (default 1). Used to read the real client IP safely for rate limiting. |
+| `TRUSTED_PROXY_HOPS` | No | Trusted reverse proxies in front of the API (default 1, which fits Render). Used to read the real client IP safely for rate limiting. Set `0` if nothing sits in front of the app. |
+| `MAX_ARTICLE_BLOCKS` | No | Most blocks a single "Generate article" call accepts (default 40). Bounds the cost of one call. |
 | `CORS_ORIGINS` | No | Comma-separated allowed origins for the API (defaults to `*`). Set this to your frontend's URL in production. |
 
 The frontend reads these from `frontend/.env`:

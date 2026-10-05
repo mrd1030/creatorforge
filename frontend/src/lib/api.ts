@@ -5,6 +5,25 @@ export const API = `${BACKEND_URL}/api`;
 
 const client = axios.create({ baseURL: API, timeout: 120000 });
 
+// Turn a FastAPI error body ({ detail: "..." } or a validation list) into readable text.
+function detailMessage(detail: unknown): string | undefined {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail) && detail.length) {
+    const d = detail[0] as { loc?: unknown[]; msg?: string };
+    const field = Array.isArray(d.loc) ? d.loc[d.loc.length - 1] : undefined;
+    return field ? `${field}: ${d.msg}` : d.msg;
+  }
+  return undefined;
+}
+
+// Surface the server's own error message (rate limits, input limits) instead of
+// axios's generic "Request failed with status code 429".
+client.interceptors.response.use(undefined, (error) => {
+  const msg = detailMessage(error?.response?.data?.detail);
+  if (msg) error.message = msg;
+  return Promise.reject(error);
+});
+
 export async function generateBlock(payload: any): Promise<{ text: string }> {
   const { data } = await client.post("/generate/block", payload);
   return data;
@@ -20,17 +39,17 @@ export async function humanize(text: string, styleId: string, styleInstructions?
   return data;
 }
 
-export async function generateMeta(title: string, content: string, focusKeyword: string): Promise<{ text: string }> {
-  const { data } = await client.post("/generate/meta", { title, content, focusKeyword });
+export async function generateMeta(title: string, content: string, focusKeyword: string, niche?: string): Promise<{ text: string }> {
+  const { data } = await client.post("/generate/meta", { title, content, focusKeyword, niche });
   return data;
 }
 
-export async function generateSeo(payload: { title?: string; topic?: string; content?: string; focusKeyword?: string }): Promise<{ focusKeyword: string; metaDescription: string }> {
+export async function generateSeo(payload: { title?: string; topic?: string; content?: string; focusKeyword?: string; niche?: string }): Promise<{ focusKeyword: string; metaDescription: string }> {
   const { data } = await client.post("/generate/seo", payload);
   return data;
 }
 
-export async function generateImagePrompt(payload: { topic: string; angle?: string; styleId?: string; blockNote?: string }): Promise<{ prompt: string; alt: string }> {
+export async function generateImagePrompt(payload: { topic: string; angle?: string; styleId?: string; blockNote?: string; niche?: string }): Promise<{ prompt: string; alt: string }> {
   const { data } = await client.post("/generate/image-prompt", payload);
   return data;
 }
@@ -107,7 +126,11 @@ export async function streamBlock(
     body: JSON.stringify(payload),
     signal,
   });
-  if (!resp.ok || !resp.body) throw new Error(`Stream failed (${resp.status})`);
+  if (!resp.ok || !resp.body) {
+    let msg: string | undefined;
+    try { msg = detailMessage((await resp.json())?.detail); } catch { /* non-JSON error body */ }
+    throw new Error(msg || `Stream failed (${resp.status})`);
+  }
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
   let buf = "";
