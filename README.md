@@ -75,6 +75,27 @@ npm start
 The frontend dev server runs on `http://localhost:3000` and expects the backend at whatever
 `VITE_BACKEND_URL` points to (`http://localhost:8000` by default).
 
+## Running tests
+
+From `backend/`, after `pip install -r requirements.txt`:
+
+```bash
+python -m pytest
+```
+
+This runs the offline suite: input and rate limits, SEO length rules, prompt checks, and the
+Claude request format (with the API mocked out). It needs no API key and costs nothing.
+
+`tests/test_live_api.py` is an end-to-end suite that calls a running backend, and through it
+the real Claude API (and Resend, for one email check). It's skipped by default because it spends
+real API credits. To run it, start the backend and point the tests at it:
+
+```bash
+CREATORFORGE_LIVE_URL=http://localhost:8000 python -m pytest tests/test_live_api.py
+```
+
+The backend allows 20 AI requests per minute per IP, so run it against a freshly started server.
+
 ## Known limitations
 
 - **localStorage-only persistence.** Drafts, styles, and settings are stored in the browser's
