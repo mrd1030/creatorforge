@@ -39,7 +39,8 @@ Copy `backend/.env.example` to `backend/.env` and fill in:
 | `TAVILY_API_KEY` | For fact search | Powers "Search for facts" in the brief builder. Without it, that feature is disabled but everything else still works. |
 | `RESEND_API_KEY` | For sending email | Needed to send newsletter test/preview emails. |
 | `SENDER_EMAIL` | For sending email | The "from" address used when sending via Resend. |
-| `CLAUDE_MODEL` | No | Overrides the Claude model used (defaults to `claude-sonnet-5-5`). |
+| `CLAUDE_MODEL` | No | Overrides the Claude model used (defaults to `claude-sonnet-5-5`). Any Claude model ID works; `claude-opus-5-5` is the stronger, pricier option. |
+| `GENERATION_EFFORT` | No | How much the model thinks before writing: `low` (default), `medium`, `high`, `xhigh` or `max`. Higher can improve hard pieces but is slower and costs more. |
 | `TRUSTED_PROXY_HOPS` | No | Trusted reverse proxies in front of the API (default 1, which fits Render). Used to read the real client IP safely for rate limiting. Set `0` if nothing sits in front of the app. |
 | `MAX_ARTICLE_BLOCKS` | No | Most blocks a single "Generate article" call accepts (default 40). Bounds the cost of one call. |
 | `CORS_ORIGINS` | No | Comma-separated allowed origins for the API (defaults to `*`). Set this to your frontend's URL in production. |

@@ -304,21 +304,91 @@ def _cached_system(system: str):
     return [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]
 
 
-async def llm_complete(system: str, user_text: str, max_tokens: int = 2000) -> str:
+# Model-dependent request settings. Current models (Claude 5 family, Opus 4.6+, Sonnet 4.6)
+# take an effort level; Claude 5 models also think before answering, and that thinking counts
+# toward max_tokens, so each call gets extra headroom on top of its reply budget. Models not
+# listed here get a plain request, so CLAUDE_MODEL can point at any model.
+_EFFORT_MODEL_PREFIXES = (
+    "claude-fable-5", "claude-mythos-5", "claude-opus-5", "claude-sonnet-5",
+    "claude-opus-4-8", "claude-opus-4-7", "claude-opus-4-6", "claude-sonnet-4-6",
+)
+_THINKING_MODEL_PREFIXES = ("claude-fable-5", "claude-mythos-5", "claude-opus-5", "claude-sonnet-5")
+_THINKING_HEADROOM_TOKENS = 4096
+# Models that accept server-side refusal fallback ("default" routing). On a safety decline the
+# API retries the request on a fallback model inside the same call.
+_FALLBACK_MODELS = {"claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5"}
+_FALLBACK_BETA = "server-side-fallback-2026-07-01"
+
+# low suits content generation and keeps latency and cost down; raise it if you measure a
+# quality gain on your own articles.
+GENERATION_EFFORT = os.environ.get('GENERATION_EFFORT', 'low').strip().lower()
+_EFFORT_LEVELS = {"low", "medium", "high", "xhigh", "max"}
+
+_anthropic_client: Optional[anthropic_sdk.AsyncAnthropic] = None
+
+
+def _client() -> anthropic_sdk.AsyncAnthropic:
+    global _anthropic_client
     if not ANTHROPIC_API_KEY:
         raise HTTPException(500, "No LLM key configured. Set ANTHROPIC_API_KEY in backend/.env.")
+    if _anthropic_client is None:
+        _anthropic_client = anthropic_sdk.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+    return _anthropic_client
+
+
+def _request_args(system: str, user_text: str, reply_tokens: int) -> Dict[str, Any]:
+    """Arguments for client.beta.messages.create / .stream for the configured model."""
+    args: Dict[str, Any] = {
+        "model": CLAUDE_MODEL,
+        "max_tokens": reply_tokens,
+        "system": _cached_system(system),
+        "messages": [{"role": "user", "content": user_text}],
+    }
+    if CLAUDE_MODEL.startswith(_THINKING_MODEL_PREFIXES):
+        args["max_tokens"] = reply_tokens + _THINKING_HEADROOM_TOKENS
+    if CLAUDE_MODEL.startswith(_EFFORT_MODEL_PREFIXES) and GENERATION_EFFORT in _EFFORT_LEVELS:
+        args["output_config"] = {"effort": GENERATION_EFFORT}
+    if CLAUDE_MODEL in _FALLBACK_MODELS:
+        args["betas"] = [_FALLBACK_BETA]
+        args["fallbacks"] = "default"
+    return args
+
+
+def _response_text(msg) -> str:
+    """Joins the text blocks of a response. Responses can start with thinking blocks, so
+    blocks are read by type, never by position."""
+    if msg.stop_reason == "refusal":
+        raise HTTPException(422, "The AI declined this request. Try rewording the topic or notes.")
+    text = "".join(block.text for block in msg.content if block.type == "text")
+    if not text.strip():
+        raise HTTPException(502, "The AI returned an empty response. Please try again.")
+    return text
+
+
+def _api_error(e: Exception) -> HTTPException:
+    """Maps an Anthropic SDK error to a message that's safe to show users."""
+    if isinstance(e, anthropic_sdk.AuthenticationError):
+        return HTTPException(500, "The Anthropic API key is invalid. Check ANTHROPIC_API_KEY.")
+    if isinstance(e, anthropic_sdk.PermissionDeniedError):
+        return HTTPException(500, "The Anthropic API key can't use this model. Check CLAUDE_MODEL.")
+    if isinstance(e, anthropic_sdk.NotFoundError):
+        return HTTPException(500, f"Model '{CLAUDE_MODEL}' was not found. Check CLAUDE_MODEL.")
+    if isinstance(e, anthropic_sdk.RateLimitError):
+        return HTTPException(429, "The AI service is busy right now. Please wait a moment and try again.")
+    if isinstance(e, anthropic_sdk.BadRequestError):
+        return HTTPException(502, "The AI request was rejected. Check the server logs for details.")
+    return HTTPException(502, "The AI service is unavailable right now. Please try again.")
+
+
+async def llm_complete(system: str, user_text: str, max_tokens: int = 2000) -> str:
+    """One Claude call. max_tokens is the reply budget; thinking headroom is added on top."""
+    client = _client()
     try:
-        aclient = anthropic_sdk.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
-        msg = await aclient.messages.create(
-            model=CLAUDE_MODEL,
-            max_tokens=max_tokens,
-            system=_cached_system(system),
-            messages=[{"role": "user", "content": user_text}],
-        )
-        return msg.content[0].text
-    except Exception as e:
+        msg = await client.beta.messages.create(**_request_args(system, user_text, max_tokens))
+    except anthropic_sdk.APIError as e:
         logger.exception("Anthropic API call failed")
-        raise HTTPException(500, f"Anthropic error: {str(e)}")
+        raise _api_error(e)
+    return _response_text(msg)
 
 
 # ============ MODELS ============
@@ -577,21 +647,27 @@ async def generate_block_stream(body: GenerateBlockIn):
                 text = _filter_references_block(text.strip(), body.brief.factsToUse)
                 yield f"data: {json.dumps({'delta': text})}\n\n"
             elif ANTHROPIC_API_KEY:
-                aclient = anthropic_sdk.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
-                async with aclient.messages.stream(
-                    model=CLAUDE_MODEL,
-                    max_tokens=1500,
-                    system=_cached_system(system),
-                    messages=[{"role": "user", "content": user}],
-                ) as stream:
+                async with _client().beta.messages.stream(**_request_args(system, user, 1500)) as stream:
                     async for text in stream.text_stream:
                         yield f"data: {json.dumps({'delta': text})}\n\n"
+                    final = await stream.get_final_message()
+                if final.stop_reason == "refusal":
+                    yield f"data: {json.dumps({'error': 'The AI declined this request. Try rewording the topic or notes.'})}\n\n"
+                    return
             else:
                 yield f"data: {json.dumps({'error': 'No LLM key configured. Set ANTHROPIC_API_KEY in backend/.env.'})}\n\n"
                 return
-        except Exception as e:
+        except HTTPException as e:
+            yield f"data: {json.dumps({'error': e.detail})}\n\n"
+            return
+        except anthropic_sdk.APIError as e:
             logger.exception("Stream failed")
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            yield f"data: {json.dumps({'error': _api_error(e).detail})}\n\n"
+            return
+        except Exception:
+            logger.exception("Stream failed")
+            yield f"data: {json.dumps({'error': 'Generation failed. Please try again.'})}\n\n"
+            return
         yield f"data: {json.dumps({'done': True})}\n\n"
 
     return StreamingResponse(

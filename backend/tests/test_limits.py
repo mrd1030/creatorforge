@@ -135,3 +135,63 @@ def test_seo_route_enforces_lengths(monkeypatch):
     assert len(body["seoTitle"]) <= server.SEO_TITLE_MAX
     assert len(body["metaDescription"]) <= server.META_DESCRIPTION_MAX
     assert not body["metaDescription"].endswith(" ")
+
+
+# ---- Claude request shape (no network: a mock transport stands in for the API) ----
+
+def _mock_client(content, stop_reason="end_turn", status=200, seen=None):
+    import anthropic
+    import httpx2
+
+    def handler(request):
+        if seen is not None:
+            body = json.loads(request.content)
+            body["_beta"] = request.headers.get("anthropic-beta")
+            seen.append(body)
+        if status != 200:
+            return httpx2.Response(status, json={"type": "error", "error": {"type": "rate_limit_error", "message": "x"}})
+        return httpx2.Response(200, json={
+            "id": "msg_1", "type": "message", "role": "assistant", "model": server.CLAUDE_MODEL,
+            "content": content, "stop_reason": stop_reason, "stop_sequence": None,
+            "usage": {"input_tokens": 1, "output_tokens": 1}})
+
+    return anthropic.AsyncAnthropic(api_key="sk-test", max_retries=0, http_client=anthropic.DefaultAsyncHttpxClient(
+        transport=httpx2.MockTransport(handler)))
+
+
+def test_llm_reads_text_after_thinking_blocks(monkeypatch):
+    import asyncio
+    seen = []
+    monkeypatch.setattr(server, "ANTHROPIC_API_KEY", "sk-test")
+    monkeypatch.setattr(server, "CLAUDE_MODEL", "claude-sonnet-5-5")
+    monkeypatch.setattr(server, "GENERATION_EFFORT", "low")
+    monkeypatch.setattr(server, "_anthropic_client", _mock_client(
+        [{"type": "thinking", "thinking": "", "signature": "s"}, {"type": "text", "text": "Hi"}], seen=seen))
+    assert asyncio.run(server.llm_complete("sys", "user", max_tokens=200)) == "Hi"
+    req = seen[0]
+    assert req["model"] == "claude-sonnet-5-5"
+    assert req["max_tokens"] == 200 + server._THINKING_HEADROOM_TOKENS
+    assert req["output_config"] == {"effort": "low"}
+    assert req["fallbacks"] == "default" and req["_beta"] == server._FALLBACK_BETA
+    assert "temperature" not in req and "thinking" not in req
+
+
+def test_llm_refusal_and_errors_are_user_safe(monkeypatch):
+    import asyncio
+    from fastapi import HTTPException
+    monkeypatch.setattr(server, "ANTHROPIC_API_KEY", "sk-test")
+    monkeypatch.setattr(server, "_anthropic_client", _mock_client([], stop_reason="refusal"))
+    with pytest.raises(HTTPException) as e:
+        asyncio.run(server.llm_complete("sys", "user"))
+    assert e.value.status_code == 422
+    monkeypatch.setattr(server, "_anthropic_client", _mock_client([], status=429))
+    with pytest.raises(HTTPException) as e:
+        asyncio.run(server.llm_complete("sys", "user"))
+    assert e.value.status_code == 429 and "rate_limit" not in e.value.detail
+
+
+def test_unknown_models_get_a_plain_request(monkeypatch):
+    monkeypatch.setattr(server, "CLAUDE_MODEL", "claude-haiku-4-5")
+    args = server._request_args("sys", "user", 200)
+    assert args["max_tokens"] == 200
+    assert not {"output_config", "fallbacks", "betas"} & set(args)
